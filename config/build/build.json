@@ -1,0 +1,9 @@
+{
+	"name":"aurora",
+	"version":"0.0.1",
+	"public":"public",
+	"templates":"templates",
+	"dest":"builds",
+	"src":"cmd/aurora",
+	"config":"config"
+}
