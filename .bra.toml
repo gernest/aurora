@@ -4,11 +4,11 @@ init_cmds = [
 ]						# Commands run in start
 watch_all = true		# Watch all sub-directories
 watch_dirs = [
-	"cmd",
-	"public",
+	"$WORKDIR/cmd",
+	"$WORKDIR/public",
 	"$WORKDIR/templates"
 ]
-watch_exts = [".go",".html",".tmpl",".js",".css",".json"]
+watch_exts = [".go",".html",".js",".css"]
 build_delay = 1500		# Minimal interval to Trigger build event
 cmds = [
 	["go","run","bin/build.go","-v"],
