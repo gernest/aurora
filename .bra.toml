@@ -1,0 +1,21 @@
+[run]
+init_cmds = [
+	["go","run","bin/build.go","-v"]
+]						# Commands run in start
+watch_all = true		# Watch all sub-directories
+watch_dirs = [
+	"cmd",
+	"public",
+	"$WORKDIR/templates"
+]
+watch_exts = [".go",".html",".tmpl",".js",".css",".json"]
+build_delay = 1500		# Minimal interval to Trigger build event
+cmds = [
+	["go","run","bin/build.go","-v"],
+	["./builds/0.0.1/aurora"]
+
+]
+
+[sync]
+listen_addr = ":5050"
+remote_addr = ":5050"
