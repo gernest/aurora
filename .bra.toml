@@ -4,6 +4,7 @@ init_cmds = [
 ]						# Commands run in start
 watch_all = true		# Watch all sub-directories
 watch_dirs = [
+	"$WORKDIR/bin",
 	"$WORKDIR/cmd",
 	"$WORKDIR/public",
 	"$WORKDIR/templates"

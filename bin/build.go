@@ -72,9 +72,7 @@ func (a *AuroraCLI) RunTests() {
 func (a *AuroraCLI) CreateBinary() {
 	a.log("==>Creating executable")
 	o := filepath.Join(a.cfg.Dest, filepath.Join(a.cfg.Version, a.cfg.AppName))
-	a.log(o)
 	src := filepath.Join(a.cfg.Src, a.cfg.AppName+".go")
-	a.log(src)
 	out, err := exec.Command("go", "build", "-o", o, "-v", src).Output()
 	a.logErr(err)
 	if len(out) > 0 {

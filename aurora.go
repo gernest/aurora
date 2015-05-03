@@ -1,12 +1,14 @@
 package aurora
 
 import (
-	"fmt"
+	"log"
+	"net/http"
 
 	"github.com/gernest/render"
 
 	"github.com/gernest/mrs"
 	"github.com/gernest/warlock"
+	"github.com/gorilla/mux"
 )
 
 type Aurora struct {
@@ -32,5 +34,9 @@ func New(aCfg *Config, wCfg *warlock.Config, mCfg *mrs.Config) *Aurora {
 }
 
 func (a *Aurora) Run() {
-	fmt.Println("aurora")
+	m := mux.NewRouter()
+	m.HandleFunc("/", a.Base.Base)
+	port := ":8080"
+	log.Println("listening at localhost port ", port)
+	log.Fatal(http.ListenAndServe(port, m))
 }
