@@ -1,0 +1,42 @@
+{{template "base/head" .}}
+<main>
+    <div class="container">
+        <div class="row">
+            <!-- begin registration form-->
+            <form class="col s12" method="post" action="/auth/login">
+                <div class="row">
+                    <div class="input-field col s12">
+                        <input id="email" type="email" class="validate"
+                               name="Email" required>
+                        <label for="email" data-error="wrong"
+                               data-success="right">Email</label>
+                    </div>
+                    {{if .errors.Email}}
+                    <div class="col s12 red">
+                        <p class="center-align">{{.errors.Email}}</p>
+                    </div>
+                    {{end}}
+                </div>
+                <div class="row">
+                    <div class="input-field col s12">
+                        <input id="password" type="password" class="validate"
+                               name="Password" required>
+                        <label for="password" data-error="wrong"
+                               data-success="right">Password</label>
+                    </div>
+                    {{if .errors.Password}}
+                    <div class="col s12 red">
+                        <p class="center-align">{{.errors.Password}}</p>
+                    </div>
+                    {{end}}
+                </div>
+                <button class="btn waves-effect waves-light" type="submit"
+                        >Submit
+                    <i class="mdi-content-send right"></i>
+                </button>
+            </form>
+        </div>
+
+    </div>
+</main>
+{{template "base/footer" .}}
