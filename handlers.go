@@ -3,9 +3,8 @@ package aurora
 import (
 	"net/http"
 
-	"github.com/gorilla/context"
-
 	"github.com/gernest/render"
+	"github.com/gorilla/context"
 )
 
 type Handlers struct {
