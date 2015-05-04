@@ -6,7 +6,7 @@ import (
 )
 
 type Config struct {
-	Appname        string `json:"name"`
+	AppName        string `json:"name"`
 	AppUrl         string `json:"url"`
 	CdnMode        bool   `json:"cdn_mode"`
 	RunMode        string `json:"run_mode"`

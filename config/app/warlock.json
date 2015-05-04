@@ -3,7 +3,7 @@
 	"login_templ":"auth/login",
 	"not_found_templ":"404",
 	"server_error_templ":"500",
-	"db":"users.db",
+	"db":"db/users.db",
 	"session_max_age":5000,
 	"session_path":"/",
 	"session_name":"__auro",

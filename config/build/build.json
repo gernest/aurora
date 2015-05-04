@@ -5,5 +5,6 @@
 	"templates":"templates",
 	"dest":"builds",
 	"src":"cmd/aurora",
-	"config":"config"
+	"config":"config",
+	"database_dir":"db"
 }

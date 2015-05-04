@@ -31,6 +31,7 @@ type BuildConfig struct {
 	Src        string `json:"src"`
 	WorkingDir string `json:"-"`
 	ConfigDir  string `json:"config"`
+	DBDIr      string `json:"database_dir"`
 }
 
 func NewCLI() *AuroraCLI {
@@ -92,6 +93,16 @@ func (a *AuroraCLI) Assemble() {
 	a.logErr(a.copyDir(path.Join(a.cfg.ConfigDir, "app"), appCfg))
 
 }
+func (a *AuroraCLI) SetupDatabase() {
+	// create database directory
+	if a.cfg.DBDIr == "" {
+		a.logErr(os.MkdirAll(path.Join(a.buildDir, "db"), 0700))
+	} else if path.IsAbs(a.cfg.DBDIr) {
+		a.logErr(os.MkdirAll(a.cfg.DBDIr, 0700))
+	} else {
+		a.logErr(os.MkdirAll(path.Join(a.buildDir, a.cfg.DBDIr), 0700))
+	}
+}
 func (a *AuroraCLI) Build() {
 	// load configuration file
 	a.logErr(a.loadConfig())
@@ -107,6 +118,9 @@ func (a *AuroraCLI) Build() {
 
 	// assemble evrything into the build directory
 	a.Assemble()
+
+	// setup database
+	a.SetupDatabase()
 }
 func (a *AuroraCLI) loadConfig() error {
 	a.log("==>loading configuration")
