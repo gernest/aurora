@@ -3,5 +3,15 @@
  */
 
 $(document).ready(function(){
-    $('.button-collapse').sideNav()
+    $('.button-collapse').sideNav();
+
+    // profile
+    profileUpdateBtn=$('.update-btn');
+    profileUpdateSect=$('.update-section');
+    profileUpdateBtn.click(function(){
+        profileUpdateSect.toggle();
+    })
+
+
+
 });

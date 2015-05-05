@@ -35,7 +35,9 @@
                     class="mdi-navigation-menu"></i></a>
             <ul class="right hide-on-med-and-down">
                 <li><a href="#">report</a></li>
-                <li><a href="#">profile</a></li>
+                <li><a href="/profile/{{.user.ID}}">
+                    <span>{{.user.FirstName}}</span>
+                    <span>{{.user.LastName}}</span></a></li>
                 <li><a href="/auth/logout">logout</a></li>
             </ul>
             <ul class="side-nav indigo lighte" id="mobile-demo">
@@ -47,7 +49,10 @@
                         <i class="mdi-navigation-close"></i>
                     </div>
                 </form>
-                <li class="white"><a href="mobile.html">profile</a></li>
+                <li><a href="/profile/{{.user.ID}}">
+                    <span>{{.user.FirstName}}</span>
+                    <span>{{.user.LastName}}</span></a></li>
+                <li><a href="/auth/logout">logout</a></li>
             </ul>
         </div>
         {{else}}

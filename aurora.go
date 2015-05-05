@@ -5,9 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gernest/render"
-
 	"github.com/gernest/mrs"
+	"github.com/gernest/render"
 	"github.com/gernest/warlock"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
@@ -46,13 +45,14 @@ func (a *Aurora) Routes() *mux.Router {
 	m.HandleFunc("/auth/logout", a.Auth.Logout).Methods("GET", "POST")
 
 	// profile
-	pid := "{id:^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$}"
-	m.HandleFunc(fmt.Sprintf("/profile/%s", pid), a.Profile.Home).Methods("GET", "POST")
-	m.HandleFunc(fmt.Sprintf("/profile/pic/%s", pid), a.Profile.ProfilePic).Methods("POST")
-	m.HandleFunc(fmt.Sprintf("/profile/uploads/%s", pid), a.Profile.FileUploads).Methods("POST")
+	pid := "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+	m.HandleFunc(fmt.Sprintf("/profile/{id:%s}", pid), a.Profile.MeOnly(a.Profile.Home)).Methods("GET", "POST")
+	m.HandleFunc(fmt.Sprintf("/profile/pic/{id:%s}", pid), a.Profile.ProfilePic).Methods("POST")
+	m.HandleFunc(fmt.Sprintf("/profile/uploads/{id:%s}", pid), a.Profile.FileUploads).Methods("POST")
+	m.HandleFunc(fmt.Sprintf("/profile/view/{id:%s}", pid), a.Profile.View).Methods("POST")
 
 	// photo
-	m.HandleFunc(fmt.Sprintf("/imgs/%s", pid), a.Photo.Show)
+	m.HandleFunc(fmt.Sprintf("/imgs/{id:%s}", pid), a.Photo.Show)
 	return m
 }
 
@@ -63,4 +63,5 @@ func (a *Aurora) Run() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./public"))))
 	http.Handle("/", stack.Then(a.Routes()))
 	log.Fatal(http.ListenAndServe(port, nil))
+
 }
