@@ -50,6 +50,7 @@ func (a *Aurora) Routes() *mux.Router {
 	m.HandleFunc(fmt.Sprintf("/profile/pic/{id:%s}", pid), a.Profile.ProfilePic).Methods("POST")
 	m.HandleFunc(fmt.Sprintf("/profile/uploads/{id:%s}", pid), a.Profile.FileUploads).Methods("POST")
 	m.HandleFunc(fmt.Sprintf("/profile/view/{id:%s}", pid), a.Profile.View).Methods("POST")
+	m.HandleFunc(fmt.Sprintf("/profile/update/{id:%s}", pid), a.Profile.MeOnly(a.Profile.Update)).Methods("POST")
 
 	// photo
 	m.HandleFunc(fmt.Sprintf("/imgs/{id:%s}", pid), a.Photo.Show)
