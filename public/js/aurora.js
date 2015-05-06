@@ -11,11 +11,13 @@ $(document).ready(function(){
         var upProgress=$('.up-progress');
         var upError=$('.up-error');
         var upForm=$('.up-form');
-        var upMsg=$('.up-message')
+        var upMsg=$('.up-message');
 
         upSection.toggle();
         upProgress.toggle();
-        upBtn.click(function(){ upSection.toggle()});
+        upBtn.click(function(){
+            upSection.toggle();
+        });
         upForm.submit(function(e){
             upForm.toggle();
             upProgress.toggle();
