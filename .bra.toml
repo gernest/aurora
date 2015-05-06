@@ -1,6 +1,7 @@
 [run]
 init_cmds = [
-	["go","run","bin/build.go","-v"]
+	["go","run","bin/build.go","-v"],
+		["./builds/0.0.1/aurora"]
 ]						# Commands run in start
 watch_all = true		# Watch all sub-directories
 watch_dirs = [
