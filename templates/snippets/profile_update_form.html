@@ -1,6 +1,11 @@
-<div class="update-section">
+<div class="up-section">
+    <div class="progress up-progress">
+        <div class="indeterminate"></div>
+    </div>
+    <div class="up-message"></div>
     <!-- begin registration form-->
-    <form class="col s12" method="post" action="/profile/update/{{.user.ID}}">
+    <form class="col s12 up-form" method="post"
+          action="/profile/update/{{.user.ID}}">
         <div class="row">
             <label for="gender">Gender</label>
             <select id="gender" class="browser-default" name="Gender">
@@ -16,7 +21,7 @@
             <div class="input-field col s12">
                 <input id="birth" type="date"
                        class="validate" name="BirthDate"
-                       required>
+                       >
                 <label for="birth" data-error="wrong"
                        data-success="right">
                     Birth Date</label>
@@ -25,23 +30,15 @@
         <div class="row">
             <div class="input-field col s12">
                 <input id="height" type="number" class="validate"
-                       name="Height" required>
+                       name="Height" >
                 <label for="height" data-error="wrong"
                        data-success="right">Height</label>
             </div>
         </div>
         <div class="row">
             <div class="input-field col s12">
-                <input id="weight" type="number" class="validate"
-                       name="weight" required>
-                <label for="height" data-error="wrong"
-                       data-success="right">Weight</label>
-            </div>
-        </div>
-        <div class="row">
-            <div class="input-field col s12">
                 <input id="city" type="text" class="validate"
-                       name="City" required>
+                       name="City" >
                 <label for="city" data-error="wrong"
                        data-success="right">City</label>
             </div>
@@ -49,7 +46,7 @@
         <div class="row">
             <div class="input-field col s12">
                 <input id="country" type="text" class="validate"
-                       name="Country" required>
+                       name="Country" >
                 <label for="country" data-error="wrong"
                        data-success="right">Country</label>
             </div>
@@ -57,7 +54,7 @@
         <div class="row">
             <div class="input-field col s12">
                 <input id="street" type="text" class="validate"
-                       name="Street" required>
+                       name="Street" >
                 <label for="street" data-error="wrong"
                        data-success="right">Street</label>
             </div>
