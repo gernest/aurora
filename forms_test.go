@@ -18,13 +18,13 @@ func TestIsName(t *testing.T) {
 			},
 		),
 	))
-	req1, _ := http.NewRequest("POST", "/", strings.NewReader(url.Values{"name": {"bluele"}}.Encode()))
+	req1, _ := http.NewRequest("POST", "/", strings.NewReader(url.Values{"name": {"gernest"}}.Encode()))
 	req1.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	form1 := Form(req1)
 	if !form1.IsValid() {
 		t.Error("Not expected: validation error.")
 	}
-	req2, _ := http.NewRequest("POST", "/", strings.NewReader(url.Values{"name": {"bluele--"}}.Encode()))
+	req2, _ := http.NewRequest("POST", "/", strings.NewReader(url.Values{"name": {"gernest--"}}.Encode()))
 	req2.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	form2 := Form(req2)
 	if form2.IsValid() {
