@@ -60,6 +60,7 @@ func TestSess_Get(t *testing.T) {
 func TestSess_Delete(t *testing.T) {
 	store, req := sessSetup(t)
 	s := testSaveSess(store, req, t, "user", "gernest")
+	defer testDb.DeleteDatabase()
 	w := httptest.NewRecorder()
 	err := store.Delete(req, w, s)
 	if err != nil {
