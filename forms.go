@@ -115,7 +115,7 @@ func (vl EqualValidator) Validate(fi *gforms.FieldInstance, fo *gforms.FormInsta
 }
 
 func ComposeLoginForm() gforms.Form {
-	return gforms.DefineForm(
+	return gforms.DefineForm(gforms.NewFields(
 		gforms.NewTextField(
 			"email",
 			gforms.Validators{
@@ -130,5 +130,5 @@ func ComposeLoginForm() gforms.Form {
 				gforms.MinLengthValidator(6, MsgMinlength),
 			},
 		),
-	)
+	))
 }
