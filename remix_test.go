@@ -18,6 +18,28 @@ import (
 
 var pass = "mamamia"
 
+func TestRemix_Home(t *testing.T) {
+	ts, client, _ := testServer(t)
+	defer ts.Close()
+
+	res, err := client.Get(ts.URL)
+	defer res.Body.Close()
+	if err != nil {
+		t.Error(err)
+	}
+	if err == nil {
+		if res.StatusCode != http.StatusOK {
+			t.Errorf("Expected %d got %d", http.StatusOK, res.StatusCode)
+		}
+		w := &bytes.Buffer{}
+		io.Copy(w, res.Body)
+		if !contains(w.String(), "prove it yourself") {
+			t.Error("Expected InSession not to be pset")
+		}
+	}
+
+}
+
 func TestRemix_Register(t *testing.T) {
 	ts, client, rx := testServer(t)
 	defer ts.Close()
@@ -99,8 +121,13 @@ func TestRemix_Register(t *testing.T) {
 		t.Error(err)
 	}
 	if err == nil {
-		if res5.StatusCode != http.StatusNotFound {
-			t.Errorf("Expected %d got %d", http.StatusFound, res5.StatusCode)
+		if res5.StatusCode != http.StatusOK {
+			t.Errorf("Expected %d got %d", http.StatusOK, res5.StatusCode)
+		}
+		w := &bytes.Buffer{}
+		io.Copy(w, res5.Body)
+		if !contains(w.String(), "search") {
+			t.Error("Expected InSession to be set")
 		}
 	}
 
@@ -224,10 +251,15 @@ func TestRemix_Login(t *testing.T) {
 		t.Error(err)
 	}
 	if err == nil {
-		if res4.StatusCode != http.StatusNotFound {
-			t.Errorf("Expected %d got %d", http.StatusNotFound, res4.StatusCode)
+		if res4.StatusCode != http.StatusOK {
+			t.Errorf("Expected %d got %d", http.StatusOK, res4.StatusCode)
 		}
+		w := &bytes.Buffer{}
+		io.Copy(w, res4.Body)
 
+		if !contains(w.String(), "search") {
+			t.Error("Expected InSession to be set")
+		}
 	}
 }
 
@@ -256,6 +288,7 @@ func testServer(t *testing.T) (*httptest.Server, *http.Client, *Remix) {
 	}
 	client := &http.Client{Jar: jar}
 	h := mux.NewRouter()
+	h.HandleFunc("/", rx.Home)
 	h.HandleFunc("/auth/register", rx.Register)
 	h.HandleFunc("/auth/login", rx.Login).Methods("GET", "POST")
 	ts := httptest.NewServer(h)

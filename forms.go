@@ -3,7 +3,6 @@ package aurora
 import (
 	"errors"
 	"fmt"
-	"log"
 	"reflect"
 
 	valid "github.com/asaskevich/govalidator"
@@ -11,26 +10,34 @@ import (
 )
 
 var (
-	MsgRequired  = "hili eneo halitakiwi kuachwa wazi"
-	MsgName      = "hili eneo linatakiwa liwe mchanganyiko wa herufi na namba"
-	MsgEmail     = "email sio sahihi. mfano gernest@aurora.com"
-	MsgPhone     = "namba ya simu sio sahihi. mfano +25571700112233"
-	MsgMinlength = "namba ya siri inatakiwa kuanzia herufi 6 na kuendelea"
-	MsgEqual     = "%s inatakiwa iwe sawa na %s"
+	// MsgRequired is the error message for required validation.
+	MsgRequired = "hili eneo halitakiwi kuachwa wazi"
+
+	// MsgName is the error message displayed for a name validation
+	MsgName = "hili eneo linatakiwa liwe mchanganyiko wa herufi na namba"
+
+	//MsgEmail is the error message displayed for email validation
+	MsgEmail = "email sio sahihi. mfano gernest@aurora.com"
+
+	// MsgMinLength is the error message for a minimum length validation
+	MsgMinLength = "namba ya siri inatakiwa kuanzia herufi 6 na kuendelea"
+
+	// MsgEqual is the error message for equality validation
+	MsgEqual = "%s inatakiwa iwe sawa na %s"
 )
 
-func init() {
-	log.SetFlags(log.Lshortfile)
-}
-
+// This is an interface which is helpful for implementing a custom validator.
+// I adopted this so that I can use the functions defined in the govalidator library.
 type validateFunc func(string) bool
 
+// CustomValidator a custom validator for gforms
 type CustomValidator struct {
 	Vf      validateFunc
 	Message string
 	gforms.Validator
 }
 
+// Validate validates fields
 func (vl CustomValidator) Validate(fi *gforms.FieldInstance, fo *gforms.FormInstance) error {
 	v := fi.V
 	if v.IsNil || v.Kind != reflect.String || v.Value == "" {
@@ -42,6 +49,8 @@ func (vl CustomValidator) Validate(fi *gforms.FieldInstance, fo *gforms.FormInst
 	return nil
 
 }
+
+// ComposeRegisterForm builds a registration form for validation(with gforms)
 func ComposeRegisterForm() gforms.ModelForm {
 	return gforms.DefineModelForm(User{}, gforms.NewFields(
 		gforms.NewTextField(
@@ -70,7 +79,7 @@ func ComposeRegisterForm() gforms.ModelForm {
 			gforms.Validators{
 				gforms.Required(MsgRequired),
 				IsName(),
-				gforms.MinLengthValidator(6, MsgMinlength),
+				gforms.MinLengthValidator(6, MsgMinLength),
 			},
 		),
 		gforms.NewTextField(
@@ -78,23 +87,27 @@ func ComposeRegisterForm() gforms.ModelForm {
 			gforms.Validators{
 				gforms.Required(MsgRequired),
 				IsName(),
-				gforms.MinLengthValidator(6, MsgMinlength),
+				gforms.MinLengthValidator(6, MsgMinLength),
 				EqualValidator{to: "pass", Message: MsgEqual},
 			},
 		),
 	))
 }
 
+// IsName retruns a name validator
 func IsName() CustomValidator {
 	return CustomValidator{Vf: valid.IsAlphanumeric, Message: MsgName}
 }
 
+// EqualValidator checks if the two fields are equal. The to attribute is the name of
+// the field whose value must be equal to the current field
 type EqualValidator struct {
 	CustomValidator
 	to      string
 	Message string
 }
 
+// Validate  fields
 func (vl EqualValidator) Validate(fi *gforms.FieldInstance, fo *gforms.FormInstance) error {
 	v := fi.V
 	if v.IsNil || v.Kind != reflect.String || v.Value == "" {
@@ -112,11 +125,13 @@ func (vl EqualValidator) Validate(fi *gforms.FieldInstance, fo *gforms.FormInsta
 
 }
 
+// holds login form data
 type loginForm struct {
 	Email    string `gforms:"email"`
 	Password string `gforms:"password"`
 }
 
+// ComposeLoginForm builds a login form for validation( with gforms)
 func ComposeLoginForm() gforms.ModelForm {
 	return gforms.DefineModelForm(loginForm{}, gforms.NewFields(
 		gforms.NewTextField(
@@ -130,7 +145,7 @@ func ComposeLoginForm() gforms.ModelForm {
 			"password",
 			gforms.Validators{
 				gforms.Required(MsgRequired),
-				gforms.MinLengthValidator(6, MsgMinlength),
+				gforms.MinLengthValidator(6, MsgMinLength),
 			},
 		),
 	))

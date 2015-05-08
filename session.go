@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/sessions"
 )
 
+// Session implemets gorilla session store interface
 type Session struct {
 	store    nutz.Storage
 	bucket   string
@@ -26,6 +27,7 @@ type sessionValue struct {
 	Expires time.Time `json:"expires"`
 }
 
+// NewSessStore creates a new session store
 func NewSessStore(db nutz.Storage, bucket string, duration int, opts *sessions.Options, secrets ...[]byte) *Session {
 	return &Session{
 		store:    db,
@@ -36,10 +38,12 @@ func NewSessStore(db nutz.Storage, bucket string, duration int, opts *sessions.O
 	}
 }
 
+// Get retrieves a session
 func (s *Session) Get(r *http.Request, name string) (*sessions.Session, error) {
 	return sessions.GetRegistry(r).Get(s, name)
 }
 
+// New always returns a session, if the sessio is not found, a new one is created.
 func (s *Session) New(r *http.Request, name string) (*sessions.Session, error) {
 	session := sessions.NewSession(s, name)
 	session.Options = s.options
@@ -61,6 +65,7 @@ func (s *Session) New(r *http.Request, name string) (*sessions.Session, error) {
 	return session, err
 }
 
+// Save persist a session
 func (s *Session) Save(r *http.Request, w http.ResponseWriter, session *sessions.Session) error {
 	sessID := base32.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(32))
 	if session.ID == "" {
@@ -77,6 +82,7 @@ func (s *Session) Save(r *http.Request, w http.ResponseWriter, session *sessions
 	return nil
 }
 
+// Delete remove a session from database, and expires the cliet cookie
 func (s *Session) Delete(r *http.Request, w http.ResponseWriter, session *sessions.Session) error {
 	options := *session.Options
 	options.MaxAge = -1
@@ -109,7 +115,7 @@ func (s *Session) load(session *sessions.Session) error {
 		return err
 	}
 	if v.Expires.Sub(time.Now()) < 0 {
-		return errors.New("warlock: session expired")
+		return errors.New("aurora: session expired")
 	}
 	err = securecookie.DecodeMulti(session.Name(), v.Data, &session.Values, s.codecs...)
 	if err != nil {

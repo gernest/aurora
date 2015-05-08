@@ -8,15 +8,18 @@ import (
 	"github.com/gernest/render"
 )
 
+// Remix all the fun is here
 type Remix struct {
 	sess       *Session
 	rendr      *render.Render
 	accoundtDB nutz.Storage
 	cfg        *RemixConfig
 }
+
+// RemixConfig contain configuration values for Remix
 type RemixConfig struct {
 	AppName        string `json:"name"`
-	AppUrl         string `json:"url"`
+	AppURL         string `json:"url"`
 	CdnMode        bool   `json:"cdn_mode"`
 	RunMode        string `json:"run_mode"`
 	AppTitle       string `json:"title"`
@@ -24,9 +27,21 @@ type RemixConfig struct {
 	SessionName    string `json:"session_name"`
 	AccountsBucket string `json:"accounts_bucket"`
 
+	// The path to point to when login is success
 	LoginRedirect string `json:"login_redirect"`
 }
 
+// Home is the root path handler
+func (rx *Remix) Home(w http.ResponseWriter, r *http.Request) {
+	ss, err := rx.sess.New(r, rx.cfg.SessionName)
+	if err != nil {
+		// logerror
+	}
+	data := setSessionData(ss)
+	rx.rendr.HTML(w, http.StatusOK, "home", data)
+}
+
+// Register creates a ew user accounts
 func (rx *Remix) Register(w http.ResponseWriter, r *http.Request) {
 	ss, err := rx.sess.New(r, rx.cfg.SessionName)
 	data := render.NewTemplateData()
@@ -63,7 +78,7 @@ func (rx *Remix) Register(w http.ResponseWriter, r *http.Request) {
 
 		flash := NewFlash()
 		flash.Success("akaunti imefanikiwa kutengenezwa")
-		flash.Add(ss)
+		flash.Save(ss)
 		ss.Values["user"] = user.EmailAddress
 		err = ss.Save(r, w)
 		if err != nil {
@@ -76,6 +91,7 @@ func (rx *Remix) Register(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Login logges in users.
 func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
 	ss, err := rx.sess.New(r, rx.cfg.SessionName)
 	if err != nil {

@@ -6,11 +6,13 @@ import (
 	"github.com/nu7hatch/gouuid"
 )
 
+// Account is an interface for a user account managemen
 type Account interface {
 	Email() string
 	Password() string
 }
 
+// User contains details about a user
 type User struct {
 	UUID         string    `json:"uuid" gforms:"-"`
 	FirstName    string    `json:"first_name" gforms:"first_name"`
@@ -22,13 +24,17 @@ type User struct {
 	UpdatedAt    time.Time `json:"updated_at" gforms:"-"`
 }
 
+// Email user email address
 func (u *User) Email() string {
 	return u.EmailAddress
 }
+
+// Password user password
 func (u *User) Password() string {
 	return u.Pass
 }
 
+// NewUser creates a new user and assings him a new uuid
 func NewUser() *User {
 	id, err := uuid.NewV4()
 	if err != nil {
@@ -37,6 +43,7 @@ func NewUser() *User {
 	return &User{UUID: id.String()}
 }
 
+// Profile contains additional information about the user
 type Profile struct {
 	ID        string    `json:"id"`
 	Picture   string    `json:"picture"`
