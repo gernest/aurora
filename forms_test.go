@@ -37,19 +37,18 @@ func TestIsName(t *testing.T) {
 
 func TestComposeRegisterForm(t *testing.T) {
 	Form := ComposeRegisterForm()
-	vars := url.Values{}
-	vars.Set("first_name", "gernest")
-	vars.Set("last_name", "aurora")
-	vars.Set("email_address", "gernest@aurora.com")
-	vars.Set("pass", "bogusBogus")
-	vars.Set("confirm_pass", "bogusBogus")
+	vars := url.Values{
+		"first_name":    {"gernest"},
+		"last_name":     {"aurora"},
+		"email_address": {"gernest@aurora.com"},
+		"pass":          {"mypassword"},
+		"confirm_pass":  {"mypassword"},
+	}
 	req1, _ := http.NewRequest("POST", "/", strings.NewReader(vars.Encode()))
 	req1.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	form1 := Form(req1)
 	if !form1.IsValid() {
-		for k, v := range form1.Errors() {
-			t.Errorf("%s ---> %s", k, v)
-		}
+		t.Error("Expected form to be valid")
 	}
 	usr := form1.GetModel().(User)
 	if usr.EmailAddress != vars.Get("email_address") {

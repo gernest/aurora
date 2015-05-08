@@ -101,14 +101,12 @@ func (vl EqualValidator) Validate(fi *gforms.FieldInstance, fo *gforms.FormInsta
 		return nil
 	}
 	fi2, ok := fo.GetField(vl.to)
-	if !ok {
-		log.Println("here")
-		return fmt.Errorf("%s haipo", fi2.GetName())
-	}
-	v2 := fi2.GetV()
+	if ok {
+		v2 := fi2.GetV()
 
-	if v.Value != v2.Value {
-		return fmt.Errorf(vl.Message, fi.GetName(), fi2.GetName())
+		if v.Value != v2.Value {
+			return fmt.Errorf(vl.Message, fi.GetName(), fi2.GetName())
+		}
 	}
 	return nil
 
