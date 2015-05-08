@@ -23,6 +23,8 @@ type RemixConfig struct {
 	AppDescription string `json:"description"`
 	SessionName    string `json:"session_name"`
 	AccountsBucket string `json:"accounts_bucket"`
+
+	LoginRedirect string `json:"login_redirect"`
 }
 
 func (rx *Remix) Register(w http.ResponseWriter, r *http.Request) {
@@ -62,14 +64,60 @@ func (rx *Remix) Register(w http.ResponseWriter, r *http.Request) {
 		flash := NewFlash()
 		flash.Success("akaunti imefanikiwa kutengenezwa")
 		flash.Add(ss)
-		ss.Values["user"] = user.Email()
+		ss.Values["user"] = user.EmailAddress
 		err = ss.Save(r, w)
 		if err != nil {
 			rx.rendr.HTML(w, http.StatusInternalServerError, "500", data)
 			return
 		}
-		http.Redirect(w, r, "/auth/login", http.StatusFound)
+		http.Redirect(w, r, rx.cfg.LoginRedirect, http.StatusFound)
 		return
 	}
 
+}
+
+func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
+	ss, err := rx.sess.New(r, rx.cfg.SessionName)
+	if err != nil {
+		// log this
+	}
+	data := render.NewTemplateData()
+	flash := NewFlash()
+	if r.Method == "GET" {
+		fd := flash.Get(ss)
+		if fd != nil {
+			data.Add("flash", fd.Data)
+		}
+		rx.rendr.HTML(w, http.StatusOK, "auth/login", data)
+		return
+	}
+	if r.Method == "POST" {
+		form := ComposeLoginForm()(r)
+		if !form.IsValid() {
+			data.Add("errors", form.Errors())
+			rx.rendr.HTML(w, http.StatusOK, "auth/login", data)
+			return
+		}
+
+		lform := form.GetModel().(loginForm)
+		user, err := GetUser(rx.accoundtDB, rx.cfg.AccountsBucket, lform.Email)
+		if err != nil {
+			data.Add("error", "email au namba ya siri sio sahihi, tafadhali jaribu tena")
+			rx.rendr.HTML(w, http.StatusOK, "auth/login", data)
+			return
+		}
+		if err = verifyPass(user.Pass, lform.Password); err != nil {
+			data.Add("error", "email au namba ya siri sio sahihi, tafadhali jaribu tena")
+			rx.rendr.HTML(w, http.StatusOK, "auth/login", data)
+			return
+		}
+		ss.Values["user"] = user.EmailAddress
+		err = ss.Save(r, w)
+		if err != nil {
+			rx.rendr.HTML(w, http.StatusInternalServerError, "500", data)
+			return
+		}
+		http.Redirect(w, r, rx.cfg.LoginRedirect, http.StatusFound)
+		return
+	}
 }

@@ -37,8 +37,8 @@ func createIfNotexist(db nutz.Storage, obj interface{}, buck, key string, nest .
 }
 
 func hashPassword(pass string) (string, error) {
-	p, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
-	return string(p), err
+	np, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
+	return string(np), err
 }
 
 type Flash struct {
@@ -76,4 +76,20 @@ func (f *Flash) Get(s *sessions.Session) *Flash {
 		return f
 	}
 	return nil
+}
+
+func getAndUnmarshall(db nutz.Storage, bucket, key string, obj interface{}, nest ...string) error {
+	g := db.Get(bucket, key, nest...)
+	if g.Error != nil {
+		return g.Error
+	}
+	err := json.Unmarshal(g.Data, obj)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func verifyPass(hash, pass string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(pass))
 }

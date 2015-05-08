@@ -114,8 +114,13 @@ func (vl EqualValidator) Validate(fi *gforms.FieldInstance, fo *gforms.FormInsta
 
 }
 
-func ComposeLoginForm() gforms.Form {
-	return gforms.DefineForm(gforms.NewFields(
+type loginForm struct {
+	Email    string `gforms:"email"`
+	Password string `gforms:"password"`
+}
+
+func ComposeLoginForm() gforms.ModelForm {
+	return gforms.DefineModelForm(loginForm{}, gforms.NewFields(
 		gforms.NewTextField(
 			"email",
 			gforms.Validators{

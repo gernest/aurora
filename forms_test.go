@@ -52,7 +52,7 @@ func TestComposeRegisterForm(t *testing.T) {
 		}
 	}
 	usr := form1.GetModel().(User)
-	if usr.EmailAdress != vars.Get("email_address") {
+	if usr.EmailAddress != vars.Get("email_address") {
 		t.Errorf("Expected to get a user struct")
 	}
 
