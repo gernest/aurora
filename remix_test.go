@@ -221,6 +221,28 @@ func TestRemix_Login(t *testing.T) {
 	}
 }
 
+func TestRemixt_ServeImages(t *testing.T) {
+	//ts, client, _ := testServer(t)
+	//defer ts.Close()
+	//vars := url.Values{
+	//	"iid": {"my iage"},
+	//	"pid": {"my profileid"},
+	//}
+	//rUrl := fmt.Sprintf("%s/imgs?%s", ts.URL, vars.Encode())
+	//res, err := client.Get(rUrl)
+	//defer res.Body.Close()
+	//if err != nil {
+	//	t.Error(err)
+	//}
+	//if res.StatusCode != http.StatusOK {
+	//	t.Errorf("Expected %d got %d", http.StatusOK, res.StatusCode)
+	//	t.Error(rUrl)
+	//}
+	//w := &bytes.Buffer{}
+	//io.Copy(w, res.Body)
+	//t.Error(w.String())
+}
+
 // This cleans up all the remix based test databases
 func TestClean(t *testing.T) {
 	ts, _, rx := testServer(t)
@@ -282,6 +304,7 @@ func testServer(t *testing.T) (*httptest.Server, *http.Client, *Remix) {
 	h.HandleFunc("/", rx.Home)
 	h.HandleFunc("/auth/register", rx.Register)
 	h.HandleFunc("/auth/login", rx.Login).Methods("GET", "POST")
+	h.HandleFunc("/imgs", rx.ServeImages).Methods("GET")
 	ts := httptest.NewServer(h)
 	return ts, client, rx
 }

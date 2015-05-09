@@ -36,7 +36,7 @@ func TestGetMultipleFileUpload(t *testing.T) {
 	if err != nil {
 		list := err.(listErr)
 		if len(list) != 2 {
-			t.Error("Expected two errors got %d", len(list))
+			t.Errorf("Expected two errors got %d", len(list))
 		}
 		if len(files) != 3 {
 			t.Errorf("Expected 3 files got %d", len(files))
@@ -73,7 +73,7 @@ func TestGetMultipleFileUpload(t *testing.T) {
 		t.Error(err)
 	}
 	if len(files) != 3 {
-		t.Errorf("Expected 3 files got %s", len(files))
+		t.Errorf("Expected 3 files got %d", len(files))
 	}
 }
 func checkExtension(f *fileUpload, ext string, t *testing.T) {

@@ -1,13 +1,12 @@
 package aurora
 
 import (
-	"log"
+	"bytes"
 	"net/http"
 
 	"github.com/gernest/nutz"
-	"github.com/gorilla/sessions"
-
 	"github.com/gernest/render"
+	"github.com/gorilla/sessions"
 )
 
 // Remix all the fun is here
@@ -26,18 +25,22 @@ type RemixConfig struct {
 	RunMode        string `json:"run_mode"`
 	AppTitle       string `json:"title"`
 	AppDescription string `json:"description"`
-	SessionName    string `json:"session_name"`
+
+	// path to the directory where databases will be stored
+	DBDir string `json:"database_dir"`
+
 	AccountsBucket string `json:"accounts_bucket"`
-	AccountsDB     string
+	AccountsDB     string `json:"accounts_database"`
+	DBExtension    string `json:"database_extension"`
+	ProfilesBucket string `json:"profiles_bucket"`
+
+	SessionName    string `json:"sessions_name"`
+	SessionsDB     string `json:"sessions_database"`
+	SessionsBucket string `json:"sessions_bucket"`
+	SessMaxAge     int    `json:"sessions_max_age"`
 
 	// The path to point to when login is success
 	LoginRedirect string `json:"login_redirect"`
-
-	DBDir          string `json:"database_dir"`
-	DBExtension    string `json:"database_extension"`
-	ProfilesBucket string
-	SessionsDB     string
-	SessionsBucket string
 }
 
 // Home is the root path handler
@@ -154,6 +157,30 @@ func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (rx *Remix) ServeImages(w http.ResponseWriter, r *http.Request) {
+	vars := r.URL.Query()
+	imgID := vars.Get("iid")
+	profileID := vars.Get("pid")
+
+	pic := &photo{}
+	pdb := getProfileDatabase(rx.cfg.DBDir, profileID, rx.cfg.DBExtension)
+	db := setDB(rx.db, pdb)
+
+	err := getAndUnmarshall(db, "photos", imgID, pic, "meta")
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	raw := db.Get("photos", imgID, "data")
+	if raw.Error != nil {
+		http.NotFound(w, r)
+		return
+	}
+	picName := pic.ID + "." + pic.Type
+	http.ServeContent(w, r, picName, pic.UpdatedAt, bytes.NewReader(raw.Data))
+}
+
 func setDB(db nutz.Storage, dbname string) nutz.Storage {
 	d := db
 	d.DBName = dbname
@@ -163,12 +190,11 @@ func setDB(db nutz.Storage, dbname string) nutz.Storage {
 // Sets the InSession value, and and flash(which contains flash messages) to be used as
 // context in templates.
 func setSessionData(ss *sessions.Session, rx *Remix) render.TemplateData {
-	log.SetFlags(log.Lshortfile)
-	data := render.NewTemplateData()
+	data := setConfigData(rx.cfg)
 	flash := NewFlash()
 	fd := flash.Get(ss)
 	if fd != nil {
-		data.Add("flsh", fd.Data)
+		data.Add("flash", fd.Data)
 	}
 	if !ss.IsNew {
 		data.Add("InSession", true)
@@ -187,4 +213,31 @@ func setSessionData(ss *sessions.Session, rx *Remix) render.TemplateData {
 		return data
 	}
 	return data
+}
+
+func setConfigData(c *RemixConfig) render.TemplateData {
+	data := render.NewTemplateData()
+	data.Add("AppName", c.AppName)
+	data.Add("AppTitle", c.AppTitle)
+	data.Add("AppDescription", c.AppDescription)
+	data.Add("CdnMode", c.CdnMode)
+	data.Add("AppURL", c.AppURL)
+	data.Add("RunMode", c.RunMode)
+	return data
+
+}
+
+// Checks if the given ID is mine.
+func isMe(ss *sessions.Session, id string, rx *Remix) bool {
+	if !ss.IsNew {
+		email := ss.Values["user"].(string)
+		user, err := GetUser(setDB(rx.db, rx.cfg.AccountsDB), rx.cfg.AccountsBucket, email)
+		if err != nil {
+			return false
+		}
+		if user.UUID == id {
+			return true
+		}
+	}
+	return false
 }
