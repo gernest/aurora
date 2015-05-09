@@ -29,10 +29,7 @@ func TestGetUser(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err == nil {
-		if user.EmailAddress != usr.EmailAddress {
-			t.Errorf("Expected %s got %s", usr.EmailAddress, user.EmailAddress)
-		}
+	if user.EmailAddress != usr.EmailAddress {
+		t.Errorf("Expected %s got %s", usr.EmailAddress, user.EmailAddress)
 	}
-
 }

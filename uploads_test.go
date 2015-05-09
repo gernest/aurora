@@ -17,9 +17,7 @@ func TestGetFileUpload(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err == nil {
-		checkExtension(f, "jpg", t)
-	}
+	checkExtension(f, "jpg", t)
 	f, err = GetFileUpload(req, "nothere")
 	if err == nil {
 		t.Error("Expected an error, got nil instead")
@@ -65,16 +63,26 @@ func TestGetMultipleFileUpload(t *testing.T) {
 	if err == nil {
 		t.Error("Expected an error, got nil instead")
 	}
+
+	req1, err := requestMultiWithoutErr()
+	if err != nil {
+		t.Error(err)
+	}
+	files, err = GetMultipleFileUpload(req1, "photos")
+	if err != nil {
+		t.Error(err)
+	}
+	if len(files) != 3 {
+		t.Errorf("Expected 3 files got %s", len(files))
+	}
 }
 func checkExtension(f *fileUpload, ext string, t *testing.T) {
 	rext, err := getFileExt(*f.Body)
 	if err != nil {
 		t.Error(err)
 	}
-	if err == nil {
-		if rext != ext {
-			t.Errorf("Expected %s got %s", ext, rext)
-		}
+	if rext != ext {
+		t.Errorf("Expected %s got %s", ext, rext)
 	}
 }
 
@@ -130,6 +138,34 @@ func requestMuliFile() (*http.Request, error) {
 		return nil, err
 	}
 	fifth.Write([]byte("shit"))
+	req, err := http.NewRequest("POST", "http://bogus.com", buf)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	return req, nil
+}
+
+func requestMultiWithoutErr() (*http.Request, error) {
+	buf := new(bytes.Buffer)
+	f, err := ioutil.ReadFile("public/img/me.jpg")
+	if err != nil {
+		return nil, err
+	}
+	w := multipart.NewWriter(buf)
+	defer w.Close()
+	first, err := w.CreateFormFile("photos", "home.jpg")
+	if err != nil {
+		return nil, err
+	}
+	first.Write(f)
+	second, err := w.CreateFormFile("photos", "baby.jpg")
+	if err != nil {
+		return nil, err
+	}
+	second.Write(f)
+	third, err := w.CreateFormFile("photos", "wanker.jpg")
+	if err != nil {
+		return nil, err
+	}
+	third.Write(f)
 	req, err := http.NewRequest("POST", "http://bogus.com", buf)
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	return req, nil

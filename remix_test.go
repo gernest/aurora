@@ -29,17 +29,14 @@ func TestRemix_Home(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err == nil {
-		if res.StatusCode != http.StatusOK {
-			t.Errorf("Expected %d got %d", http.StatusOK, res.StatusCode)
-		}
-		w := &bytes.Buffer{}
-		io.Copy(w, res.Body)
-		if !contains(w.String(), "prove it yourself") {
-			t.Error("Expected InSession not to be pset")
-		}
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("Expected %d got %d", http.StatusOK, res.StatusCode)
 	}
-
+	w := &bytes.Buffer{}
+	io.Copy(w, res.Body)
+	if !contains(w.String(), "prove it yourself") {
+		t.Error("Expected InSession not to be pset")
+	}
 }
 
 func TestRemix_Register(t *testing.T) {
@@ -52,10 +49,8 @@ func TestRemix_Register(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err == nil {
-		if res1.StatusCode != http.StatusOK {
-			t.Errorf("Expected %d got %d", http.StatusOK, res1.StatusCode)
-		}
+	if res1.StatusCode != http.StatusOK {
+		t.Errorf("Expected %d got %d", http.StatusOK, res1.StatusCode)
 	}
 
 	// Failing validation
@@ -91,12 +86,9 @@ func TestRemix_Register(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err == nil {
-		if res3.StatusCode != http.StatusInternalServerError {
-			t.Errorf("Expected %d got %d", http.StatusFound, res3.StatusCode)
-		}
+	if res3.StatusCode != http.StatusInternalServerError {
+		t.Errorf("Expected %d got %d", http.StatusFound, res3.StatusCode)
 	}
-
 	rx.cfg.AccountsBucket = "accounts" //Restore our config
 
 	// case everything is ok
@@ -105,15 +97,13 @@ func TestRemix_Register(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err == nil {
-		if res5.StatusCode != http.StatusOK {
-			t.Errorf("Expected %d got %d", http.StatusOK, res5.StatusCode)
-		}
-		w := &bytes.Buffer{}
-		io.Copy(w, res5.Body)
-		if !contains(w.String(), "search") {
-			t.Error("Expected InSession to be set")
-		}
+	if res5.StatusCode != http.StatusOK {
+		t.Errorf("Expected %d got %d", http.StatusOK, res5.StatusCode)
+	}
+	w := &bytes.Buffer{}
+	io.Copy(w, res5.Body)
+	if !contains(w.String(), "search") {
+		t.Error("Expected InSession to be set")
 	}
 
 	// case session is not new it should redirects to login path
@@ -122,15 +112,13 @@ func TestRemix_Register(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err == nil {
-		if res6.StatusCode != http.StatusOK {
-			t.Errorf("Expected %d got %d", http.StatusOK, res6.StatusCode)
-		}
-		w := &bytes.Buffer{}
-		io.Copy(w, res6.Body)
-		if !contains(w.String(), "login-form") {
-			t.Errorf("Expected login form")
-		}
+	if res6.StatusCode != http.StatusOK {
+		t.Errorf("Expected %d got %d", http.StatusOK, res6.StatusCode)
+	}
+	w.Reset() // reuse this buffer
+	io.Copy(w, res6.Body)
+	if !contains(w.String(), "login-form") {
+		t.Errorf("Expected login form")
 	}
 
 	// making sure our password was encrypted
@@ -138,13 +126,10 @@ func TestRemix_Register(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err == nil {
-		err = verifyPass(user.Pass, pass)
-		if err != nil {
-			t.Error(err)
-		}
+	err = verifyPass(user.Pass, pass)
+	if err != nil {
+		t.Error(err)
 	}
-
 }
 
 func TestRemix_Login(t *testing.T) {
@@ -157,10 +142,8 @@ func TestRemix_Login(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err == nil {
-		if re.StatusCode != http.StatusOK {
-			t.Errorf("Expected %d got %d", http.StatusOK, re.StatusCode)
-		}
+	if re.StatusCode != http.StatusOK {
+		t.Errorf("Expected %d got %d", http.StatusOK, re.StatusCode)
 	}
 
 	// invalid form
@@ -173,19 +156,16 @@ func TestRemix_Login(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err == nil {
-		if res1.StatusCode != http.StatusOK {
-			t.Errorf("Expected %d got %d", http.StatusOK, res1.StatusCode)
-		}
-		w := &bytes.Buffer{}
-		io.Copy(w, res1.Body)
-
-		if !contains(w.String(), "login-form") {
-			t.Error("Expected login form")
-		}
+	if res1.StatusCode != http.StatusOK {
+		t.Errorf("Expected %d got %d", http.StatusOK, res1.StatusCode)
+	}
+	w := &bytes.Buffer{}
+	io.Copy(w, res1.Body)
+	if !contains(w.String(), "login-form") {
+		t.Error("Expected login form")
 	}
 
-	// case no but valid form
+	// case no such user but valid form
 	lform.Set("email", "gernesti@aurora.com")
 	lform.Set("password", "heydollringadongdillo")
 	res2, err := client.PostForm(loginURL, lform)
@@ -193,16 +173,14 @@ func TestRemix_Login(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err == nil {
-		if res2.StatusCode != http.StatusOK {
-			t.Errorf("Expected %d got %d", http.StatusOK, res2.StatusCode)
-		}
-		w := &bytes.Buffer{}
-		io.Copy(w, res2.Body)
+	if res2.StatusCode != http.StatusOK {
+		t.Errorf("Expected %d got %d", http.StatusOK, res2.StatusCode)
+	}
+	w.Reset()
+	io.Copy(w, res2.Body)
 
-		if !contains(w.String(), "login-form") {
-			t.Error("Expected login form")
-		}
+	if !contains(w.String(), "login-form") {
+		t.Error("Expected login form")
 	}
 
 	// wrong password
@@ -213,17 +191,14 @@ func TestRemix_Login(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err == nil {
-		if res2.StatusCode != http.StatusOK {
-			t.Errorf("Expected %d got %d", http.StatusOK, res3.StatusCode)
-		}
-		w := &bytes.Buffer{}
-		io.Copy(w, res3.Body)
-
-		if !contains(w.String(), "login-form") {
-			t.Error("Expected login form")
-			t.Error(w.String())
-		}
+	if res2.StatusCode != http.StatusOK {
+		t.Errorf("Expected %d got %d", http.StatusOK, res3.StatusCode)
+	}
+	w.Reset()
+	io.Copy(w, res3.Body)
+	if !contains(w.String(), "login-form") {
+		t.Error("Expected login form")
+		t.Error(w.String())
 	}
 
 	// case everything is ok, it should redirect to the path specified in Remix.cfg
@@ -235,16 +210,14 @@ func TestRemix_Login(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err == nil {
-		if res4.StatusCode != http.StatusOK {
-			t.Errorf("Expected %d got %d", http.StatusOK, res4.StatusCode)
-		}
-		w := &bytes.Buffer{}
-		io.Copy(w, res4.Body)
+	if res4.StatusCode != http.StatusOK {
+		t.Errorf("Expected %d got %d", http.StatusOK, res4.StatusCode)
+	}
+	w.Reset()
+	io.Copy(w, res4.Body)
 
-		if !contains(w.String(), "search") {
-			t.Error("Expected InSession to be set")
-		}
+	if !contains(w.String(), "search") {
+		t.Error("Expected InSession to be set")
 	}
 }
 
@@ -271,6 +244,9 @@ func TestClean(t *testing.T) {
 		t.Error(ferr)
 	}
 }
+
+// Creates a test druve server for using the Remix handlers., it also returns a ready
+// to use client, that supports sessions.
 func testServer(t *testing.T) (*httptest.Server, *http.Client, *Remix) {
 	cfg := &RemixConfig{
 		AccountsBucket: "accounts",

@@ -30,10 +30,8 @@ func TestGetProfile(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		if err == nil {
-			if p.ID != id {
-				t.Errorf("Expected %s got %s", id, p.ID)
-			}
+		if p.ID != id {
+			t.Errorf("Expected %s got %s", id, p.ID)
 		}
 	}
 	p, err := GetProfile(testDb, pBucket, "bogus")
@@ -54,13 +52,11 @@ func TestUpdateProfile(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		if err == nil {
-			p.City = city
-			p.Country = country
-			err = UpdateProfile(testDb, p, pBucket)
-			if err != nil {
-				t.Error(err)
-			}
+		p.City = city
+		p.Country = country
+		err = UpdateProfile(testDb, p, pBucket)
+		if err != nil {
+			t.Error(err)
 		}
 	}
 	p := &Profile{ID: "bogus", Country: country, City: city}

@@ -64,7 +64,7 @@ func GetMultipleFileUpload(r *http.Request, fieldName string) ([]*fileUpload, er
 		if len(ferr) > 0 {
 			return rst, ferr
 		}
-		return rst, ferr
+		return rst, nil
 	}
 	return nil, http.ErrMissingFile
 }
