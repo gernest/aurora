@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/gernest/render"
+	"github.com/nu7hatch/gouuid"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/gernest/nutz"
@@ -128,4 +129,13 @@ func setSessionData(ss *sessions.Session) render.TemplateData {
 		data.Add("InSession", true)
 	}
 	return data
+}
+
+// returns a new UUIDv4 string
+func getUUID() string {
+	id, err := uuid.NewV4()
+	if err != nil {
+		// TODO :log
+	}
+	return id.String()
 }

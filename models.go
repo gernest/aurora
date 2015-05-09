@@ -1,10 +1,6 @@
 package aurora
 
-import (
-	"time"
-
-	"github.com/nu7hatch/gouuid"
-)
+import "time"
 
 // Account is an interface for a user account managemen
 type Account interface {
@@ -36,11 +32,7 @@ func (u *User) Password() string {
 
 // NewUser creates a new user and assings him a new uuid
 func NewUser() *User {
-	id, err := uuid.NewV4()
-	if err != nil {
-		// TODO: Log and try a new one
-	}
-	return &User{UUID: id.String()}
+	return &User{UUID: getUUID()}
 }
 
 // Profile contains additional information about the user

@@ -36,6 +36,3 @@ func TestGetUser(t *testing.T) {
 	}
 
 }
-func TestCleanUp(t *testing.T) {
-	testDb.DeleteDatabase()
-}
