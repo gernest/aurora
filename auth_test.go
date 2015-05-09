@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	testDb  = nutz.NewStorage("test.db", 0600, nil)
+	testDb  = nutz.NewStorage("fixture/test.ddb", 0600, nil)
 	aBucket = "accounts"
 )
 

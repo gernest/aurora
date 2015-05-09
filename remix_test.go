@@ -8,6 +8,8 @@ import (
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -97,23 +99,6 @@ func TestRemix_Register(t *testing.T) {
 
 	rx.cfg.AccountsBucket = "accounts" //Restore our config
 
-	//case our session is messe up
-	//backUp := *rx.sess
-	//sOpts := &sessions.Options{MaxAge: maxAge, Path: sPath}
-	//ns := NewSessStore(testDb, "", 10, sOpts, secret)
-	//rx.sess = ns
-	//res4, err := client.PostForm(registerURL, usr)
-	//defer res4.Body.Close()
-	//if err != nil {
-	//	t.Error(err)
-	//}
-	//if err == nil {
-	//	if res4.StatusCode != http.StatusInternalServerError {
-	//		t.Errorf("Expected %d got %d", http.StatusInternalServerError, res4.StatusCode)
-	//	}
-	//}
-	//rx.sess = &backUp
-
 	// case everything is ok
 	res5, err := client.PostForm(registerURL, usr)
 	defer res5.Body.Close()
@@ -149,7 +134,7 @@ func TestRemix_Register(t *testing.T) {
 	}
 
 	// making sure our password was encrypted
-	user, err := GetUser(testDb, rx.cfg.AccountsBucket, "gernest@aurora.com")
+	user, err := GetUser(setDB(rx.db, rx.cfg.AccountsDB), rx.cfg.AccountsBucket, "gernest@aurora.com")
 	if err != nil {
 		t.Error(err)
 	}
@@ -263,24 +248,54 @@ func TestRemix_Login(t *testing.T) {
 	}
 }
 
+// This cleans up all the remix based test databases
+func TestClean(t *testing.T) {
+	ts, _, rx := testServer(t)
+	defer ts.Close()
+	ferr := filepath.Walk(rx.cfg.DBDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		if filepath.Ext(path) == rx.cfg.DBExtension {
+			err = os.Remove(path)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if ferr != nil {
+		t.Error(ferr)
+	}
+}
 func testServer(t *testing.T) (*httptest.Server, *http.Client, *Remix) {
 	cfg := &RemixConfig{
 		AccountsBucket: "accounts",
 		SessionName:    "aurora",
 		LoginRedirect:  "/",
+		DBDir:          "fixture",
+		DBExtension:    ".bdb",
+		AccountsDB:     "fixture/accounts.bdb",
+		ProfilesBucket: "profiles",
+		SessionsDB:     "fixture/sessions.bdb",
+		SessionsBucket: sBucket,
 	}
+
 	rOpts := render.Options{
 		Directory:     "templates",
 		Extensions:    []string{".tmpl", ".html", ".tpl"},
 		IsDevelopment: true,
 	}
 	sOpts := &sessions.Options{MaxAge: maxAge, Path: sPath}
-	store := NewSessStore(testDb, sBucket, 10, sOpts, secret)
+	store := NewSessStore(setDB(testDb, cfg.SessionsDB), cfg.SessionsBucket, 10, sOpts, secret)
 	rx := &Remix{
-		sess:       store,
-		rendr:      render.New(rOpts),
-		cfg:        cfg,
-		accoundtDB: testDb,
+		db:    testDb,
+		sess:  store,
+		rendr: render.New(rOpts),
+		cfg:   cfg,
 	}
 	jar, err := cookiejar.New(nil)
 	if err != nil {

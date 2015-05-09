@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"path/filepath"
 
-	"github.com/gernest/render"
 	"github.com/nu7hatch/gouuid"
 	"golang.org/x/crypto/bcrypt"
 
@@ -116,21 +116,6 @@ func verifyPass(hash, pass string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(pass))
 }
 
-// Sets the InSession value, and and flash(which contains flash messages) to be used as
-// context in templates.
-func setSessionData(ss *sessions.Session) render.TemplateData {
-	data := render.NewTemplateData()
-	flash := NewFlash()
-	fd := flash.Get(ss)
-	if fd != nil {
-		data.Add("flsh", fd.Data)
-	}
-	if !ss.IsNew {
-		data.Add("InSession", true)
-	}
-	return data
-}
-
 // returns a new UUIDv4 string
 func getUUID() string {
 	id, err := uuid.NewV4()
@@ -138,4 +123,8 @@ func getUUID() string {
 		// TODO :log
 	}
 	return id.String()
+}
+
+func getProfileDatabase(dbDir, profileID, dbExt string) string {
+	return filepath.Join(dbDir, profileID+dbExt)
 }

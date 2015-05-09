@@ -1,19 +1,21 @@
 package aurora
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gernest/nutz"
+	"github.com/gorilla/sessions"
 
 	"github.com/gernest/render"
 )
 
 // Remix all the fun is here
 type Remix struct {
-	sess       *Session
-	rendr      *render.Render
-	accoundtDB nutz.Storage
-	cfg        *RemixConfig
+	db    nutz.Storage
+	sess  *Session
+	rendr *render.Render
+	cfg   *RemixConfig
 }
 
 // RemixConfig contain configuration values for Remix
@@ -26,9 +28,16 @@ type RemixConfig struct {
 	AppDescription string `json:"description"`
 	SessionName    string `json:"session_name"`
 	AccountsBucket string `json:"accounts_bucket"`
+	AccountsDB     string
 
 	// The path to point to when login is success
 	LoginRedirect string `json:"login_redirect"`
+
+	DBDir          string `json:"database_dir"`
+	DBExtension    string `json:"database_extension"`
+	ProfilesBucket string
+	SessionsDB     string
+	SessionsBucket string
 }
 
 // Home is the root path handler
@@ -37,7 +46,7 @@ func (rx *Remix) Home(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// logerror
 	}
-	data := setSessionData(ss)
+	data := setSessionData(ss, rx)
 	rx.rendr.HTML(w, http.StatusOK, "home", data)
 }
 
@@ -70,12 +79,12 @@ func (rx *Remix) Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		user.Pass = hash
-		err = CreateAccount(rx.accoundtDB, &user, rx.cfg.AccountsBucket)
+		user.UUID = getUUID()
+		err = CreateAccount(setDB(rx.db, rx.cfg.AccountsDB), &user, rx.cfg.AccountsBucket)
 		if err != nil {
 			rx.rendr.HTML(w, http.StatusInternalServerError, "500", data)
 			return
 		}
-
 		flash := NewFlash()
 		flash.Success("akaunti imefanikiwa kutengenezwa")
 		flash.Save(ss)
@@ -84,6 +93,14 @@ func (rx *Remix) Register(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			rx.rendr.HTML(w, http.StatusInternalServerError, "500", data)
 			return
+		}
+
+		// create a new profile
+		pdb := getProfileDatabase(rx.cfg.DBDir, user.UUID, rx.cfg.DBExtension)
+		profile := &Profile{ID: user.UUID}
+		err = CreateProfile(setDB(rx.db, pdb), profile, rx.cfg.ProfilesBucket)
+		if err != nil {
+			// log this
 		}
 		http.Redirect(w, r, rx.cfg.LoginRedirect, http.StatusFound)
 		return
@@ -116,7 +133,7 @@ func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
 		}
 
 		lform := form.GetModel().(loginForm)
-		user, err := GetUser(rx.accoundtDB, rx.cfg.AccountsBucket, lform.Email)
+		user, err := GetUser(setDB(rx.db, rx.cfg.AccountsDB), rx.cfg.AccountsBucket, lform.Email)
 		if err != nil {
 			data.Add("error", "email au namba ya siri sio sahihi, tafadhali jaribu tena")
 			rx.rendr.HTML(w, http.StatusOK, "auth/login", data)
@@ -136,4 +153,38 @@ func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, rx.cfg.LoginRedirect, http.StatusFound)
 		return
 	}
+}
+func setDB(db nutz.Storage, dbname string) nutz.Storage {
+	d := db
+	d.DBName = dbname
+	return d
+}
+
+// Sets the InSession value, and and flash(which contains flash messages) to be used as
+// context in templates.
+func setSessionData(ss *sessions.Session, rx *Remix) render.TemplateData {
+	log.SetFlags(log.Lshortfile)
+	data := render.NewTemplateData()
+	flash := NewFlash()
+	fd := flash.Get(ss)
+	if fd != nil {
+		data.Add("flsh", fd.Data)
+	}
+	if !ss.IsNew {
+		data.Add("InSession", true)
+		email := ss.Values["user"].(string)
+		user, err := GetUser(setDB(rx.db, rx.cfg.AccountsDB), rx.cfg.AccountsBucket, email)
+		if err != nil {
+			return data
+		}
+		pdb := getProfileDatabase(rx.cfg.DBDir, user.UUID, rx.cfg.DBExtension)
+		p, err := GetProfile(setDB(rx.db, pdb), rx.cfg.ProfilesBucket, user.UUID)
+		if err != nil {
+			return data
+		}
+		data.Add("CurrentUser", user)
+		data.Add("Profile", p)
+		return data
+	}
+	return data
 }
