@@ -221,26 +221,82 @@ func TestRemix_Login(t *testing.T) {
 	}
 }
 
+func TestRemix_Uploads(t *testing.T) {
+	ts, client, _ := testServer(t)
+	defer ts.Close()
+	lform := url.Values{
+		"email":    {"gernest@aurora.com"},
+		"password": {pass},
+	}
+	loginURL := fmt.Sprintf("%s/auth/login", ts.URL)
+	upURL := fmt.Sprintf("%s/uploads", ts.URL)
+	res, err := client.PostForm(loginURL, lform)
+	if err != nil {
+		t.Error(err)
+	}
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("Ecpected %d got %d", http.StatusOK, res.StatusCode)
+	}
+	defer res.Body.Close()
+	buf, cType := testUpData("me.jpg", "single", t)
+	res2, err := client.Post(upURL, cType, buf)
+	if err != nil {
+		t.Error(err)
+	}
+	defer res2.Body.Close()
+	if res2.StatusCode != http.StatusOK {
+		t.Errorf("Ecpected %d got %d", http.StatusOK, res2.StatusCode)
+	}
+	w := &bytes.Buffer{}
+	io.Copy(w, res2.Body)
+	if !contains(w.String(), "jpg") {
+		t.Errorf("Expected to save jpg file got %s", w.String())
+	}
+
+	buf, cType = testUpData("me.jpg", "multi", t)
+	res3, err := client.Post(upURL, cType, buf)
+	if err != nil {
+		t.Error(err)
+	}
+	defer res3.Body.Close()
+	if res3.StatusCode != http.StatusOK {
+		t.Errorf("Ecpected %d got %d", http.StatusOK, res3.StatusCode)
+	}
+	w.Reset()
+	io.Copy(w, res3.Body)
+	if !contains(w.String(), "jpg") {
+		t.Errorf("Expected to save jpg file got %s", w.String())
+	}
+
+}
+
 func TestRemixt_ServeImages(t *testing.T) {
-	//ts, client, _ := testServer(t)
-	//defer ts.Close()
-	//vars := url.Values{
-	//	"iid": {"my iage"},
-	//	"pid": {"my profileid"},
-	//}
-	//rUrl := fmt.Sprintf("%s/imgs?%s", ts.URL, vars.Encode())
-	//res, err := client.Get(rUrl)
-	//defer res.Body.Close()
-	//if err != nil {
-	//	t.Error(err)
-	//}
-	//if res.StatusCode != http.StatusOK {
-	//	t.Errorf("Expected %d got %d", http.StatusOK, res.StatusCode)
-	//	t.Error(rUrl)
-	//}
-	//w := &bytes.Buffer{}
-	//io.Copy(w, res.Body)
-	//t.Error(w.String())
+	ts, client, rx := testServer(t)
+	defer ts.Close()
+
+	email := "gernest@aurora.com"
+	user, err := GetUser(setDB(rx.db, rx.cfg.AccountsDB), rx.cfg.AccountsBucket, email)
+	if err != nil {
+		t.Error(err)
+	}
+	pdb := getProfileDatabase(rx.cfg.DBDir, user.UUID, rx.cfg.DBExtension)
+	p, err := GetProfile(setDB(rx.db, pdb), rx.cfg.ProfilesBucket, user.UUID)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(p.Photos) != 3 {
+		t.Errorf("Expected 3 got %d", len(p.Photos))
+	}
+	imgURL := fmt.Sprintf("%s/imgs?%s", ts.URL, p.Picture.Query)
+
+	res, err := client.Get(imgURL)
+	defer res.Body.Close()
+	if err != nil {
+		t.Error(err)
+	}
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("Expected %d got %d", http.StatusOK, res.StatusCode)
+	}
 }
 
 // This cleans up all the remix based test databases
@@ -271,15 +327,17 @@ func TestClean(t *testing.T) {
 // to use client, that supports sessions.
 func testServer(t *testing.T) (*httptest.Server, *http.Client, *Remix) {
 	cfg := &RemixConfig{
-		AccountsBucket: "accounts",
-		SessionName:    "aurora",
-		LoginRedirect:  "/",
-		DBDir:          "fixture",
-		DBExtension:    ".bdb",
-		AccountsDB:     "fixture/accounts.bdb",
-		ProfilesBucket: "profiles",
-		SessionsDB:     "fixture/sessions.bdb",
-		SessionsBucket: sBucket,
+		AccountsBucket:  "accounts",
+		SessionName:     "aurora",
+		LoginRedirect:   "/",
+		DBDir:           "fixture",
+		DBExtension:     ".bdb",
+		AccountsDB:      "fixture/accounts.bdb",
+		ProfilesBucket:  "profiles",
+		SessionsDB:      "fixture/sessions.bdb",
+		SessionsBucket:  sBucket,
+		ProfilePicField: "profile",
+		PhotosField:     "photos",
 	}
 
 	rOpts := render.Options{
@@ -305,6 +363,7 @@ func testServer(t *testing.T) (*httptest.Server, *http.Client, *Remix) {
 	h.HandleFunc("/auth/register", rx.Register)
 	h.HandleFunc("/auth/login", rx.Login).Methods("GET", "POST")
 	h.HandleFunc("/imgs", rx.ServeImages).Methods("GET")
+	h.HandleFunc("/uploads", rx.Uploads)
 	ts := httptest.NewServer(h)
 	return ts, client, rx
 }

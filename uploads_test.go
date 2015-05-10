@@ -41,10 +41,7 @@ func TestGetFileUpload(t *testing.T) {
 }
 
 func TestGetMultipleFileUpload(t *testing.T) {
-	req, err := requestMuliFile("me.jpg")
-	if err != nil {
-		t.Error(err)
-	}
+	req := requestMuliFile("me.jpg", t)
 	files, err := GetMultipleFileUpload(req, "photos")
 	if err != nil {
 		list := err.(listErr)
@@ -171,44 +168,14 @@ func requestWithFile(fileName string) (*http.Request, error) {
 	return req, nil
 }
 
-func requestMuliFile(fileName string) (*http.Request, error) {
-	buf := new(bytes.Buffer)
-	public := "public/img/"
-	f, err := ioutil.ReadFile(fmt.Sprintf("%s%s", public, fileName))
-	if err != nil {
-		return nil, err
-	}
-	w := multipart.NewWriter(buf)
-	defer w.Close()
-	first, err := w.CreateFormFile("photos", "home.jpg")
-	if err != nil {
-		return nil, err
-	}
-	first.Write(f)
-	second, err := w.CreateFormFile("photos", "baby.jpg")
-	if err != nil {
-		return nil, err
-	}
-	second.Write(f)
-	third, err := w.CreateFormFile("photos", "wanker.jpg")
-	if err != nil {
-		return nil, err
-	}
-	third.Write(f)
-	fourth, err := w.CreateFormFile("photos", "wankerer.jpg")
-	if err != nil {
-		return nil, err
-	}
-	fourth.Write([]byte("shit"))
-
-	fifth, err := w.CreateFormFile("photos", "wankeroma.jpg")
-	if err != nil {
-		return nil, err
-	}
-	fifth.Write([]byte("shit"))
+func requestMuliFile(fileName string, t *testing.T) *http.Request {
+	buf, cType := testUpData(fileName, "multi", t)
 	req, err := http.NewRequest("POST", "http://bogus.com", buf)
-	req.Header.Set("Content-Type", w.FormDataContentType())
-	return req, nil
+	if err != nil {
+		t.Error(err)
+	}
+	req.Header.Set("Content-Type", cType)
+	return req
 }
 
 func requestMultiWithoutErr() (*http.Request, error) {
@@ -247,4 +214,56 @@ func testListErr(t *testing.T) {
 	if err.Error() != hello.Error()+", "+world.Error() {
 		t.Errorf("Expected %s, %s got %s", hello.Error(), world.Error(), err.Error())
 	}
+}
+
+func testUpData(fileName, kind string, t *testing.T) (*bytes.Buffer, string) {
+	buf := &bytes.Buffer{}
+	w := multipart.NewWriter(buf)
+	public := "public/img/"
+	defer w.Close()
+	switch kind {
+	case "multi":
+		f, err := ioutil.ReadFile(fmt.Sprintf("%s%s", public, fileName))
+		if err != nil {
+			t.Error(err)
+		}
+		first, err := w.CreateFormFile("photos", "home.jpg")
+		if err != nil {
+			t.Error(err)
+		}
+		first.Write(f)
+		second, err := w.CreateFormFile("photos", "baby.jpg")
+		if err != nil {
+			t.Error(err)
+		}
+		second.Write(f)
+		third, err := w.CreateFormFile("photos", "wanker.jpg")
+		if err != nil {
+			t.Error(err)
+		}
+		third.Write(f)
+		fourth, err := w.CreateFormFile("photos", "wankerer.jpg")
+		if err != nil {
+			t.Error(err)
+		}
+		fourth.Write([]byte("shit"))
+
+		fifth, err := w.CreateFormFile("photos", "wankeroma.jpg")
+		if err != nil {
+			t.Error(err)
+		}
+		fifth.Write([]byte("shit"))
+	case "single":
+		f, err := ioutil.ReadFile(fmt.Sprintf("%s%s", public, fileName))
+		if err != nil {
+			t.Error(err)
+		}
+		ww, err := w.CreateFormFile("profile", "me.jpg")
+		if err != nil {
+			t.Error(err)
+		}
+		ww.Write(f)
+
+	}
+	return buf, w.FormDataContentType()
 }
