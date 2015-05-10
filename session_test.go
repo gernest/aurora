@@ -67,7 +67,7 @@ func TestSess_Delete(t *testing.T) {
 		t.Error(err)
 	}
 }
-func TestClean_session(t *testing.T){
+func TestClean_session(t *testing.T) {
 	testDb.DeleteDatabase()
 }
 

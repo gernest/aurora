@@ -34,6 +34,7 @@ func TestGetUser(t *testing.T) {
 	}
 }
 
+// remove the database used by the above tests
 func TestClean_auth(t *testing.T) {
 	testDb.DeleteDatabase()
 }

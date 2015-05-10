@@ -2,17 +2,12 @@ package aurora
 
 import (
 	"bytes"
-	"log"
 	"net/http"
 
 	"github.com/gernest/nutz"
 	"github.com/gernest/render"
 	"github.com/gorilla/sessions"
 )
-
-func init() {
-	log.SetFlags(log.Lshortfile)
-}
 
 // Remix all the fun is here
 type Remix struct {
@@ -166,6 +161,7 @@ func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ServeImages serves images uploaded by users
 func (rx *Remix) ServeImages(w http.ResponseWriter, r *http.Request) {
 	vars := r.URL.Query()
 	imgID := vars.Get("iid")
@@ -195,6 +191,7 @@ type jsonUploads struct {
 	Photos     []*photo `json:"photos"`
 }
 
+// Uploads uploads files to the uploader's database
 func (rx *Remix) Uploads(w http.ResponseWriter, r *http.Request) {
 	ss, err := rx.sess.New(r, rx.cfg.SessionName)
 	if err != nil {
@@ -211,16 +208,8 @@ func (rx *Remix) Uploads(w http.ResponseWriter, r *http.Request) {
 			pdbStr := getProfileDatabase(rx.cfg.DBDir, profile.ID, rx.cfg.DBExtension)
 			pdb := setDB(rx.db, pdbStr)
 
-			// check if there is a profile pic upload
-			f, err := GetFileUpload(r, rx.cfg.ProfilePicField)
-			if err != nil {
-				if err != http.ErrMissingFile {
-					jr := &jsonUploads{Error: err.Error()}
-					rx.rendr.JSON(w, http.StatusInternalServerError, jr)
-					return
-				}
-			}
-			if err == nil && f != nil {
+			f, serr := GetFileUpload(r, rx.cfg.ProfilePicField)
+			if serr == nil {
 				pic, err := SaveUploadFile(pdb, f, profile)
 				if err != nil {
 					jr := &jsonUploads{Error: err.Error()}
@@ -237,38 +226,45 @@ func (rx *Remix) Uploads(w http.ResponseWriter, r *http.Request) {
 				rx.rendr.JSON(w, http.StatusOK, pic)
 				return
 			}
+
 			files, ferr := GetMultipleFileUpload(r, rx.cfg.PhotosField)
-			if ferr != nil && len(files) == 0 {
-				jr := &jsonUploads{Error: err.Error()}
-				rx.rendr.JSON(w, http.StatusInternalServerError, jr)
-				return
-			}
-			var rst []*photo
-			var errs listErr
-			for _, v := range files {
-				pic, err := SaveUploadFile(pdb, v, profile)
-				if err != nil {
-					errs = append(errs, err)
-					continue
+
+			if ferr != nil && len(files) > 0 || err == nil && len(files) > 0 {
+				var rst []*photo
+				var errs listErr
+				for _, v := range files {
+					pic, err := SaveUploadFile(pdb, v, profile)
+					if err != nil {
+						errs = append(errs, err)
+						continue
+					}
+					rst = append(rst, pic)
 				}
-				rst = append(rst, pic)
+				errs = append(errs, ferr)
+				if len(rst) == 0 && len(errs) > 0 {
+					jr := &jsonUploads{Error: err.Error()}
+					rx.rendr.JSON(w, http.StatusInternalServerError, jr)
+					return
+				}
+				profile.Photos = rst
+				err = UpdateProfile(pdb, profile, rx.cfg.ProfilesBucket)
+				if err != nil {
+					jr := &jsonUploads{Error: err.Error()}
+					rx.rendr.JSON(w, http.StatusInternalServerError, jr)
+					return
+				}
+				if serr != nil {
+					errs = append(errs, serr)
+				}
+				jr := &jsonUploads{Error: errs.Error(), Photos: rst}
+				rx.rendr.JSON(w, http.StatusOK, jr)
+				return
 			}
-			errs = append(errs, ferr)
-			if len(rst) == 0 && len(errs) > 0 {
-				jr := &jsonUploads{Error: err.Error()}
+			if serr != nil {
+				jr := &jsonUploads{Error: serr.Error()}
 				rx.rendr.JSON(w, http.StatusInternalServerError, jr)
 				return
 			}
-			profile.Photos = rst
-			err = UpdateProfile(pdb, profile, rx.cfg.ProfilesBucket)
-			if err != nil {
-				jr := &jsonUploads{Error: err.Error()}
-				rx.rendr.JSON(w, http.StatusInternalServerError, jr)
-				return
-			}
-			jr := &jsonUploads{Error: errs.Error(), Photos: rst}
-			rx.rendr.JSON(w, http.StatusOK, jr)
-			return
 		}
 	}
 }

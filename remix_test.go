@@ -385,10 +385,12 @@ func testServer(t *testing.T) (*httptest.Server, *http.Client, *Remix) {
 	return ts, client, rx
 }
 
+// checkts if the given str contains substring subStr
 func contains(str, substr string) bool {
 	return strings.Contains(str, substr)
 }
 
+// deletes test database files
 func clenUp(t *testing.T) {
 	ts, _, rx := testServer(t)
 	defer ts.Close()
