@@ -67,6 +67,9 @@ func TestSess_Delete(t *testing.T) {
 		t.Error(err)
 	}
 }
+func TestClean_session(t *testing.T){
+	testDb.DeleteDatabase()
+}
 
 func sessSetup(t *testing.T) (*Session, *http.Request) {
 	opts := &sessions.Options{MaxAge: maxAge, Path: sPath}

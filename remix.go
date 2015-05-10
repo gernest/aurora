@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/gernest/nutz"
 	"github.com/gernest/render"
@@ -240,7 +239,6 @@ func (rx *Remix) Uploads(w http.ResponseWriter, r *http.Request) {
 			}
 			files, ferr := GetMultipleFileUpload(r, rx.cfg.PhotosField)
 			if ferr != nil && len(files) == 0 {
-				log.Println(len(files))
 				jr := &jsonUploads{Error: err.Error()}
 				rx.rendr.JSON(w, http.StatusInternalServerError, jr)
 				return
@@ -313,31 +311,6 @@ func setConfigData(c *RemixConfig) render.TemplateData {
 	data.Add("RunMode", c.RunMode)
 	return data
 
-}
-
-// Checks if the given ID is mine.
-func isMe(ss *sessions.Session, id string, rx *Remix) bool {
-	if !ss.IsNew {
-		email := ss.Values["user"].(string)
-		user, err := GetUser(setDB(rx.db, rx.cfg.AccountsDB), rx.cfg.AccountsBucket, email)
-		if err != nil {
-			return false
-		}
-		if user.UUID == id {
-			return true
-		}
-	}
-	return false
-}
-
-// retturs true if the given request is an ajax request
-func isAjax(r *http.Request) bool {
-	return r.Header.Get("X-Requested-With") == "XMLHttpRequest"
-}
-
-// returns true if the given request has form upload data
-func isFleUpload(r *http.Request) bool {
-	return strings.Contains(r.Header.Get("Content-Type"), "multipart/form-data")
 }
 
 func getCurrentUserAndProfile(ss *sessions.Session, rx *Remix) (*User, *Profile, error) {

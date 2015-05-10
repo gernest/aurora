@@ -222,7 +222,7 @@ func TestRemix_Login(t *testing.T) {
 }
 
 func TestRemix_Uploads(t *testing.T) {
-	ts, client, _ := testServer(t)
+	ts, client, rx := testServer(t)
 	defer ts.Close()
 	lform := url.Values{
 		"email":    {"gernest@aurora.com"},
@@ -268,6 +268,42 @@ func TestRemix_Uploads(t *testing.T) {
 		t.Errorf("Expected to save jpg file got %s", w.String())
 	}
 
+	bAb := rx.cfg.AccountsBucket
+	rx.cfg.AccountsBucket = ""
+	buf, cType = testUpData("me.jpg", "single", t)
+	res4, err := client.Post(upURL, cType, buf)
+	if err != nil {
+		t.Error(err)
+	}
+	defer res4.Body.Close()
+	if res4.StatusCode != http.StatusInternalServerError {
+		t.Errorf("Ecpected %d got %d", http.StatusInternalServerError, res4.StatusCode)
+	}
+	w.Reset()
+	io.Copy(w, res4.Body)
+	if !contains(w.String(), "bucket") {
+		t.Errorf("Expected to save jpg file got %s", w.String())
+	}
+	rx.cfg.AccountsBucket = bAb
+
+	bAb = rx.cfg.ProfilePicField
+	rx.cfg.ProfilePicField = ""
+	buf, cType = testUpData("me.jpg", "single", t)
+	res5, err := client.Post(upURL, cType, buf)
+	if err != nil {
+		t.Error(err)
+	}
+	defer res5.Body.Close()
+	if res4.StatusCode != http.StatusInternalServerError {
+		t.Errorf("Ecpected %d got %d", http.StatusInternalServerError, res5.StatusCode)
+	}
+	w.Reset()
+	io.Copy(w, res5.Body)
+	if !contains(w.String(), " no such file") {
+		t.Errorf("Expected  %s to contain no such file", w.String())
+	}
+	rx.cfg.ProfilePicField = bAb
+
 }
 
 func TestRemixt_ServeImages(t *testing.T) {
@@ -300,27 +336,8 @@ func TestRemixt_ServeImages(t *testing.T) {
 }
 
 // This cleans up all the remix based test databases
-func TestClean(t *testing.T) {
-	ts, _, rx := testServer(t)
-	defer ts.Close()
-	ferr := filepath.Walk(rx.cfg.DBDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		if filepath.Ext(path) == rx.cfg.DBExtension {
-			err = os.Remove(path)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	if ferr != nil {
-		t.Error(ferr)
-	}
+func TestClean_remix(t *testing.T) {
+	clenUp(t)
 }
 
 // Creates a test druve server for using the Remix handlers., it also returns a ready
@@ -370,4 +387,27 @@ func testServer(t *testing.T) (*httptest.Server, *http.Client, *Remix) {
 
 func contains(str, substr string) bool {
 	return strings.Contains(str, substr)
+}
+
+func clenUp(t *testing.T) {
+	ts, _, rx := testServer(t)
+	defer ts.Close()
+	ferr := filepath.Walk(rx.cfg.DBDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		if filepath.Ext(path) == rx.cfg.DBExtension {
+			err = os.Remove(path)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if ferr != nil {
+		t.Error(ferr)
+	}
 }

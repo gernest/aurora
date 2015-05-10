@@ -33,3 +33,7 @@ func TestGetUser(t *testing.T) {
 		t.Errorf("Expected %s got %s", usr.EmailAddress, user.EmailAddress)
 	}
 }
+
+func TestClean_auth(t *testing.T) {
+	testDb.DeleteDatabase()
+}
