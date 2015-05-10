@@ -1,10 +1,17 @@
 package aurora
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
+	"image/jpeg"
+	"image/png"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"time"
+
+	"github.com/gernest/nutz"
 )
 
 const defaultMaxMemory = 32 << 20 //32MB
@@ -18,6 +25,7 @@ type photo struct {
 	ID         string    `json:"id"`
 	Type       string    `json:"type"`
 	Size       int       `json:"size"`
+	Query      string    `json:"query"`
 	UploadedBy string    `json:"uploaded_by"`
 	UploadedAt time.Time `json:"uploaded_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
@@ -35,11 +43,16 @@ type listErr []error
 
 func (l listErr) Error() string {
 	var rst string
-	for _, e := range l {
+	for i, e := range l {
+		if i == 0 {
+			rst = e.Error()
+			continue
+		}
 		rst = rst + ", " + e.Error()
 	}
 	return rst
 }
+
 func GetMultipleFileUpload(r *http.Request, fieldName string) ([]*fileUpload, error) {
 	err := r.ParseMultipartForm(defaultMaxMemory)
 	if err != nil {
@@ -69,6 +82,35 @@ func GetMultipleFileUpload(r *http.Request, fieldName string) ([]*fileUpload, er
 	return nil, http.ErrMissingFile
 }
 
+func SaveUploadFile(db nutz.Storage, file *fileUpload, p *Profile) (*photo, error) {
+	pic := &photo{
+		ID:         getUUID(),
+		Type:       file.Ext,
+		UploadedBy: p.ID,
+		UploadedAt: time.Now(),
+		UpdatedAt:  time.Now(),
+	}
+	data, err := encodePhoto(file)
+	if err != nil {
+		return nil, err
+	}
+	pic.Size = len(data)
+	query := url.Values{
+		"iid": {pic.ID},
+		"pid": {p.ID},
+	}
+	pic.Query = query.Encode()
+	err = marshalAndCreate(db, pic, "photos", pic.ID, "meta")
+	if err != nil {
+		return nil, err
+	}
+	s := db.Create("photos", pic.ID, data, "data")
+	if s.Error != nil {
+		return nil, s.Error
+	}
+	return pic, nil
+}
+
 func getFileExt(file multipart.File) (string, error) {
 	buf := make([]byte, 512)
 	_, err := file.Read(buf)
@@ -83,7 +125,7 @@ func getFileExt(file multipart.File) (string, error) {
 	case "image/png":
 		return "png", nil
 	default:
-		return "", fmt.Errorf("file %s not supported", f)
+		return "", fmt.Errorf("aurora: file %s not supported", f)
 	}
 }
 
@@ -93,4 +135,33 @@ func getUploadFile(file multipart.File) (*fileUpload, error) {
 		return nil, err
 	}
 	return &fileUpload{&file, ext}, nil
+}
+
+func encodePhoto(file *fileUpload) ([]byte, error) {
+	ext := file.Ext
+	switch ext {
+	case "jpg", "jpeg":
+		img, err := jpeg.Decode(*file.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		// this is supposed to increase the quality of the image. But I'm not sure
+		// yet if it is necessary or we should just put nil, which will result into
+		// using default values.
+		opts := jpeg.Options{Quality: 98}
+
+		buf := new(bytes.Buffer)
+		jpeg.Encode(buf, img, &opts)
+		return buf.Bytes(), nil
+	case "png", "PNG":
+		img, err := png.Decode(*file.Body)
+		if err != nil {
+			return nil, err
+		}
+		buf := new(bytes.Buffer)
+		png.Encode(buf, img)
+		return buf.Bytes(), nil
+	}
+	return nil, errors.New("aurora: file not supported")
 }

@@ -2,6 +2,8 @@ package aurora
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -9,7 +11,7 @@ import (
 )
 
 func TestGetFileUpload(t *testing.T) {
-	req, err := requestWithFile()
+	req, err := requestWithFile("me.jpg")
 	if err != nil {
 		t.Error(err)
 	}
@@ -25,10 +27,21 @@ func TestGetFileUpload(t *testing.T) {
 	if f != nil {
 		t.Errorf("Expected nil, got %v", f)
 	}
+
+	req2, err := requestWithFile("mint.png")
+	if err != nil {
+		t.Error(err)
+	}
+	f, err = GetFileUpload(req2, "profile")
+	if err != nil {
+		t.Error(err)
+	}
+	checkExtension(f, "png", t)
+
 }
 
 func TestGetMultipleFileUpload(t *testing.T) {
-	req, err := requestMuliFile()
+	req, err := requestMuliFile("me.jpg")
 	if err != nil {
 		t.Error(err)
 	}
@@ -75,6 +88,59 @@ func TestGetMultipleFileUpload(t *testing.T) {
 	if len(files) != 3 {
 		t.Errorf("Expected 3 files got %d", len(files))
 	}
+
+	// just a bonus, Wanna know if listErr is fine
+	testListErr(t)
+}
+func TestSaveUploadFile(t *testing.T) {
+	// JPG
+	id := "db0668ac-7eba-40dd-56ee-0b1c0b9b415p"
+	pdb := setDB(testDb, "fixture/uploads.bdb")
+	defer pdb.DeleteDatabase()
+	req, err := requestWithFile("me.jpg")
+	if err != nil {
+		t.Error(err)
+	}
+	f, err := GetFileUpload(req, "profile")
+	if err != nil {
+		t.Error(err)
+	}
+	checkExtension(f, "jpg", t)
+
+	err = CreateProfile(pdb, &Profile{ID: id}, pBucket)
+	if err != nil {
+		t.Error(err)
+	}
+	p, err := GetProfile(pdb, pBucket, id)
+	if err != nil {
+		t.Error(err)
+	}
+	pic, err := SaveUploadFile(pdb, f, p)
+	if err != nil {
+		t.Error(err)
+	}
+	if f.Ext != pic.Type {
+		t.Errorf("Expected %s  got %s", f.Ext, pic.Type)
+	}
+
+	// PNG
+	req2, err := requestWithFile("mint.png")
+	if err != nil {
+		t.Error(err)
+	}
+	f, err = GetFileUpload(req2, "profile")
+	if err != nil {
+		t.Error(err)
+	}
+	checkExtension(f, "png", t)
+	pic, err = SaveUploadFile(pdb, f, p)
+	if err != nil {
+		t.Error(err)
+	}
+	if f.Ext != pic.Type {
+		t.Errorf("Expected %s  got %s", f.Ext, pic.Type)
+	}
+
 }
 func checkExtension(f *fileUpload, ext string, t *testing.T) {
 	rext, err := getFileExt(*f.Body)
@@ -86,9 +152,10 @@ func checkExtension(f *fileUpload, ext string, t *testing.T) {
 	}
 }
 
-func requestWithFile() (*http.Request, error) {
+func requestWithFile(fileName string) (*http.Request, error) {
 	buf := new(bytes.Buffer)
-	f, err := ioutil.ReadFile("public/img/me.jpg")
+	public := "public/img/"
+	f, err := ioutil.ReadFile(fmt.Sprintf("%s%s", public, fileName))
 	if err != nil {
 		return nil, err
 	}
@@ -104,9 +171,10 @@ func requestWithFile() (*http.Request, error) {
 	return req, nil
 }
 
-func requestMuliFile() (*http.Request, error) {
+func requestMuliFile(fileName string) (*http.Request, error) {
 	buf := new(bytes.Buffer)
-	f, err := ioutil.ReadFile("public/img/me.jpg")
+	public := "public/img/"
+	f, err := ioutil.ReadFile(fmt.Sprintf("%s%s", public, fileName))
 	if err != nil {
 		return nil, err
 	}
@@ -169,4 +237,14 @@ func requestMultiWithoutErr() (*http.Request, error) {
 	req, err := http.NewRequest("POST", "http://bogus.com", buf)
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	return req, nil
+}
+
+func testListErr(t *testing.T) {
+	var err listErr
+	hello := errors.New("hello")
+	world := errors.New("wordl")
+	err = append(err, hello, world)
+	if err.Error() != hello.Error()+", "+world.Error() {
+		t.Errorf("Expected %s, %s got %s", hello.Error(), world.Error(), err.Error())
+	}
 }

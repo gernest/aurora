@@ -3,6 +3,7 @@ package aurora
 import (
 	"bytes"
 	"net/http"
+	"strings"
 
 	"github.com/gernest/nutz"
 	"github.com/gernest/render"
@@ -41,6 +42,9 @@ type RemixConfig struct {
 
 	// The path to point to when login is success
 	LoginRedirect string `json:"login_redirect"`
+
+	ProfilePicField string `json:"profile_pic_field"`
+	PhotosField     string `json:"photos_field"`
 }
 
 // Home is the root path handler
@@ -181,6 +185,84 @@ func (rx *Remix) ServeImages(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, picName, pic.UpdatedAt, bytes.NewReader(raw.Data))
 }
 
+type jsonUploads struct {
+	Error      string   `json:"error"`
+	ProfilePic *photo   `json:"profile_photo"`
+	Photos     []*photo `json:"photos"`
+}
+
+func (rx *Remix) Uploads(w http.ResponseWriter, r *http.Request) {
+	ss, err := rx.sess.New(r, rx.cfg.SessionName)
+	if err != nil {
+		// log this
+	}
+	if r.Method == "POST" {
+		if !ss.IsNew {
+			if isFleUpload(r) {
+				_, profile, err := getCurrentUserAndProfile(ss, rx)
+				if err != nil {
+					jr := &jsonUploads{Error: err.Error()}
+					rx.rendr.JSON(w, http.StatusInternalServerError, jr)
+					return
+				}
+				pdbStr := getProfileDatabase(rx.cfg.DBDir, profile.ID, rx.cfg.DBExtension)
+				pdb := setDB(rx.db, pdbStr)
+
+				// check if there is a profile pic upload
+				f, err := GetFileUpload(r, rx.cfg.ProfilePicField)
+				if err != nil {
+					if err != http.ErrMissingFile {
+						jr := &jsonUploads{Error: err.Error()}
+						rx.rendr.JSON(w, http.StatusInternalServerError, jr)
+						return
+					}
+				}
+				if err == nil && f != nil {
+					pic, err := SaveUploadFile(pdb, f, profile)
+					if err != nil {
+						jr := &jsonUploads{Error: err.Error()}
+						rx.rendr.JSON(w, http.StatusInternalServerError, jr)
+						return
+					}
+					profile.Picture = pic
+					err = UpdateProfile(pdb, profile, rx.cfg.ProfilesBucket)
+					if err != nil {
+						jr := &jsonUploads{Error: err.Error()}
+						rx.rendr.JSON(w, http.StatusInternalServerError, jr)
+						return
+					}
+					rx.rendr.JSON(w, http.StatusOK, pic)
+					return
+				}
+				files, err := GetMultipleFileUpload(r, rx.cfg.PhotosField)
+				if err != nil {
+					jr := &jsonUploads{Error: err.Error()}
+					rx.rendr.JSON(w, http.StatusInternalServerError, jr)
+					return
+				}
+				var rst []*photo
+				var errs listErr
+				for _, v := range files {
+					pic, err := SaveUploadFile(pdb, v, profile)
+					if err != nil {
+						errs = append(errs, err)
+						continue
+					}
+					rst = append(rst, pic)
+				}
+				if len(rst) == 0 && len(errs) > 0 {
+					jr := &jsonUploads{Error: err.Error()}
+					rx.rendr.JSON(w, http.StatusInternalServerError, jr)
+					return
+				}
+				jr := &jsonUploads{Error: errs.Error(), Photos: rst}
+				rx.rendr.JSON(w, http.StatusOK, jr)
+				return
+			}
+		}
+	}
+}
+
 func setDB(db nutz.Storage, dbname string) nutz.Storage {
 	d := db
 	d.DBName = dbname
@@ -198,13 +280,7 @@ func setSessionData(ss *sessions.Session, rx *Remix) render.TemplateData {
 	}
 	if !ss.IsNew {
 		data.Add("InSession", true)
-		email := ss.Values["user"].(string)
-		user, err := GetUser(setDB(rx.db, rx.cfg.AccountsDB), rx.cfg.AccountsBucket, email)
-		if err != nil {
-			return data
-		}
-		pdb := getProfileDatabase(rx.cfg.DBDir, user.UUID, rx.cfg.DBExtension)
-		p, err := GetProfile(setDB(rx.db, pdb), rx.cfg.ProfilesBucket, user.UUID)
+		user, p, err := getCurrentUserAndProfile(ss, rx)
 		if err != nil {
 			return data
 		}
@@ -240,4 +316,28 @@ func isMe(ss *sessions.Session, id string, rx *Remix) bool {
 		}
 	}
 	return false
+}
+
+// retturs true if the given request is an ajax request
+func isAjax(r *http.Request) bool {
+	return r.Header.Get("X-Requested-With") == "XMLHttpRequest"
+}
+
+// returns true if the given request has form upload data
+func isFleUpload(r *http.Request) bool {
+	return strings.Contains(r.Header.Get("Content-Type"), "multipart/form-data")
+}
+
+func getCurrentUserAndProfile(ss *sessions.Session, rx *Remix) (*User, *Profile, error) {
+	email := ss.Values["user"].(string)
+	user, err := GetUser(setDB(rx.db, rx.cfg.AccountsDB), rx.cfg.AccountsBucket, email)
+	if err != nil {
+		return nil, nil, err
+	}
+	pdb := getProfileDatabase(rx.cfg.DBDir, user.UUID, rx.cfg.DBExtension)
+	p, err := GetProfile(setDB(rx.db, pdb), rx.cfg.ProfilesBucket, user.UUID)
+	if err != nil {
+		return nil, nil, err
+	}
+	return user, p, nil
 }

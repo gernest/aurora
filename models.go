@@ -38,13 +38,13 @@ func NewUser() *User {
 // Profile contains additional information about the user
 type Profile struct {
 	ID        string    `json:"id"`
-	Picture   string    `json:"picture"`
+	Picture   *photo    `json:"picture"`
 	Age       int       `json:"age"`
 	BirthDate time.Time `json:"birth_date"`
 	Height    int       `json:"height"`
 	Weight    int       `json:"weight"`
 	Hobies    []string  `json:"hobies"`
-	Photos    []string  `json:"photos"`
+	Photos    []*photo  `json:"photos"`
 	City      string    `json:"city"`
 	Country   string    `json:"country"`
 	Street    string    `json:"street"`

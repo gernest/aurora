@@ -2,13 +2,14 @@
 
 online dating site with go(a.k.a golang) and love
 
+
+
 # how to build
 
 check the file `config/build/build.json` make changes if you have changed the
  project structure.
- 
- aurora is a golang based project, you must have go installed and a all the 
- GOPATH stuffs working.
+
+You only neeg golang environmant to build(go 1.3+ )
  
  Clone this repo in your GOPATH
  
