@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"time"
 
 	valid "github.com/asaskevich/govalidator"
 	"github.com/bluele/gforms"
@@ -24,6 +25,9 @@ var (
 
 	// MsgEqual is the error message for equality validation
 	MsgEqual = "%s inatakiwa iwe sawa na %s"
+
+	// MsgMinAge the minimum age linit
+	MsgMinAge = "umri unatakiwa uwe zaidi ya miaka %d"
 )
 
 // This is an interface which is helpful for implementing a custom validator.
@@ -102,7 +106,7 @@ func IsName() CustomValidator {
 // EqualValidator checks if the two fields are equal. The to attribute is the name of
 // the field whose value must be equal to the current field
 type EqualValidator struct {
-	CustomValidator
+	gforms.Validator
 	to      string
 	Message string
 }
@@ -122,7 +126,22 @@ func (vl EqualValidator) Validate(fi *gforms.FieldInstance, fo *gforms.FormInsta
 		}
 	}
 	return nil
+}
 
+type BirthDateValidator struct {
+	Limit   int
+	Message string
+	gforms.Validator
+}
+
+func (vl BirthDateValidator) Validate(fi *gforms.FieldInstance, fo *gforms.FormInstance) error {
+	v := fi.V
+	iv := v.Value.(time.Time)
+	now := time.Now()
+	if now.Year()-iv.Year() < vl.Limit {
+		return fmt.Errorf(vl.Message, vl.Limit)
+	}
+	return nil
 }
 
 // holds login form data
@@ -146,6 +165,25 @@ func ComposeLoginForm() gforms.ModelForm {
 			gforms.Validators{
 				gforms.Required(MsgRequired),
 				gforms.MinLengthValidator(6, MsgMinLength),
+			},
+		),
+	))
+}
+
+func ComposeProfileForm() gforms.ModelForm {
+	return gforms.DefineModelForm(Profile{}, gforms.NewFields(
+		gforms.NewIntegerField(
+			"age",
+			gforms.Validators{
+				gforms.MinValueValidator(18, MsgMinAge),
+			},
+		),
+		gforms.NewDateTimeField(
+			"birth_date",
+			time.RFC822,
+			gforms.Validators{
+				gforms.Required(MsgRequired),
+				BirthDateValidator{Limit: 18, Message: MsgMinAge},
 			},
 		),
 	))

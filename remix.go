@@ -186,7 +186,7 @@ func (rx *Remix) ServeImages(w http.ResponseWriter, r *http.Request) {
 }
 
 type jsonUploads struct {
-	Error      string   `json:"error"`
+	Error      string   `json:"errors"`
 	ProfilePic *photo   `json:"profile_photo"`
 	Photos     []*photo `json:"photos"`
 }
@@ -205,6 +205,7 @@ func (rx *Remix) Uploads(w http.ResponseWriter, r *http.Request) {
 				rx.rendr.JSON(w, http.StatusInternalServerError, jr)
 				return
 			}
+
 			pdbStr := getProfileDatabase(rx.cfg.DBDir, profile.ID, rx.cfg.DBExtension)
 			pdb := setDB(rx.db, pdbStr)
 
@@ -228,7 +229,6 @@ func (rx *Remix) Uploads(w http.ResponseWriter, r *http.Request) {
 			}
 
 			files, ferr := GetMultipleFileUpload(r, rx.cfg.PhotosField)
-
 			if ferr != nil && len(files) > 0 || err == nil && len(files) > 0 {
 				var rst []*photo
 				var errs listErr
@@ -269,6 +269,7 @@ func (rx *Remix) Uploads(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// switches databases
 func setDB(db nutz.Storage, dbname string) nutz.Storage {
 	d := db
 	d.DBName = dbname
@@ -278,7 +279,7 @@ func setDB(db nutz.Storage, dbname string) nutz.Storage {
 // Sets the InSession value, and and flash(which contains flash messages) to be used as
 // context in templates.
 func setSessionData(ss *sessions.Session, rx *Remix) render.TemplateData {
-	data := setConfigData(rx.cfg)
+	data := render.NewTemplateData()
 	flash := NewFlash()
 	fd := flash.Get(ss)
 	if fd != nil {
@@ -297,6 +298,7 @@ func setSessionData(ss *sessions.Session, rx *Remix) render.TemplateData {
 	return data
 }
 
+// Sets basic configuration values which has use to the templates
 func setConfigData(c *RemixConfig) render.TemplateData {
 	data := render.NewTemplateData()
 	data.Add("AppName", c.AppName)
@@ -309,6 +311,7 @@ func setConfigData(c *RemixConfig) render.TemplateData {
 
 }
 
+// returns the current user, his profile and an error if any.
 func getCurrentUserAndProfile(ss *sessions.Session, rx *Remix) (*User, *Profile, error) {
 	email := ss.Values["user"].(string)
 	user, err := GetUser(setDB(rx.db, rx.cfg.AccountsDB), rx.cfg.AccountsBucket, email)

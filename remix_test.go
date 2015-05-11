@@ -361,6 +361,7 @@ func testServer(t *testing.T) (*httptest.Server, *http.Client, *Remix) {
 		Directory:     "templates",
 		Extensions:    []string{".tmpl", ".html", ".tpl"},
 		IsDevelopment: true,
+		DefaultData:   setConfigData(cfg),
 	}
 	sOpts := &sessions.Options{MaxAge: maxAge, Path: sPath}
 	store := NewSessStore(setDB(testDb, cfg.SessionsDB), cfg.SessionsBucket, 10, sOpts, secret)

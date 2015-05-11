@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/bluele/gforms"
 )
@@ -62,4 +63,38 @@ func TestComposeRegisterForm(t *testing.T) {
 	if form2.IsValid() {
 		t.Error("Expected: validation error.")
 	}
+}
+
+func TestBirthDateValidator(t *testing.T) {
+	Form := gforms.DefineForm(gforms.NewFields(
+		gforms.NewDateTimeField(
+			"date",
+			time.RFC822,
+			gforms.Validators{
+				BirthDateValidator{Limit: 18, Message: MsgMinAge},
+			},
+		),
+	))
+	now := time.Now()
+	nowAFter := now.AddDate(18, 1, 1)
+	dur := nowAFter.Sub(now)
+	ago := now.Add(-dur)
+	vars := url.Values{
+		"date": {now.Format(time.RFC822)},
+	}
+	req1, _ := http.NewRequest("POST", "/", strings.NewReader(vars.Encode()))
+	req1.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	form1 := Form(req1)
+	if form1.IsValid() {
+		t.Error("Expected some errors")
+	}
+	vars.Set("date", ago.Format(time.RFC822))
+	req2, _ := http.NewRequest("POST", "/", strings.NewReader(vars.Encode()))
+	req2.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	form2 := Form(req2)
+	if !form2.IsValid() {
+		t.Error(form2.Errors())
+		t.Error(ago.Format(time.RFC822))
+	}
+
 }

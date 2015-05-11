@@ -37,10 +37,10 @@ func NewUser() *User {
 
 // Profile contains additional information about the user
 type Profile struct {
-	ID        string    `json:"id"`
-	Picture   *photo    `json:"picture"`
-	Age       int       `json:"age"`
-	BirthDate time.Time `json:"birth_date"`
+	ID        string    `json:"id" gforms:"-"`
+	Picture   *photo    `json:"picture" gforms:"-"`
+	Age       int       `json:"age" gforms:"age"`
+	BirthDate time.Time `json:"birth_date" gforms:"birth_date"`
 	Height    int       `json:"height"`
 	Weight    int       `json:"weight"`
 	Hobies    []string  `json:"hobies"`
