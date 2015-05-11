@@ -10,6 +10,8 @@ import (
 	"github.com/bluele/gforms"
 )
 
+const ageLimit int = 18
+
 var (
 	// MsgRequired is the error message for required validation.
 	MsgRequired = "hili eneo halitakiwi kuachwa wazi"
@@ -175,7 +177,7 @@ func ComposeProfileForm() gforms.ModelForm {
 		gforms.NewIntegerField(
 			"age",
 			gforms.Validators{
-				gforms.MinValueValidator(18, MsgMinAge),
+				gforms.MinValueValidator(ageLimit, MsgMinAge),
 			},
 		),
 		gforms.NewDateTimeField(
@@ -183,7 +185,7 @@ func ComposeProfileForm() gforms.ModelForm {
 			time.RFC822,
 			gforms.Validators{
 				gforms.Required(MsgRequired),
-				BirthDateValidator{Limit: 18, Message: MsgMinAge},
+				BirthDateValidator{Limit: ageLimit, Message: MsgMinAge},
 			},
 		),
 	))

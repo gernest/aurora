@@ -41,7 +41,7 @@ type Profile struct {
 	Picture   *photo    `json:"picture" gforms:"-"`
 	Age       int       `json:"age" gforms:"age"`
 	BirthDate time.Time `json:"birth_date" gforms:"birth_date"`
-	Height    int       `json:"height"`
+	Height    int       `json:"height" gforms:"height"`
 	Weight    int       `json:"weight"`
 	Hobies    []string  `json:"hobies"`
 	Photos    []*photo  `json:"photos"`
