@@ -2,7 +2,9 @@ package aurora
 
 import (
 	"bytes"
+	"errors"
 	"net/http"
+	"net/url"
 
 	"github.com/gernest/nutz"
 	"github.com/gernest/render"
@@ -46,27 +48,30 @@ type RemixConfig struct {
 	PhotosField     string `json:"photos_field"`
 }
 
+type jsonUploads struct {
+	Error      string   `json:"errors"`
+	ProfilePic *photo   `json:"profile_photo"`
+	Photos     []*photo `json:"photos"`
+}
+
 // Home is the root path handler
 func (rx *Remix) Home(w http.ResponseWriter, r *http.Request) {
-	ss, err := rx.sess.New(r, rx.cfg.SessionName)
-	if err != nil {
-		// logerror
-	}
-	data := setSessionData(ss, rx)
+	data := rx.setSessionData(r)
 	rx.rendr.HTML(w, http.StatusOK, "home", data)
 }
 
 // Register creates a ew user accounts
 func (rx *Remix) Register(w http.ResponseWriter, r *http.Request) {
-	ss, err := rx.sess.New(r, rx.cfg.SessionName)
-	data := render.NewTemplateData()
-	if err != nil {
-		// Log error
-	}
-	if !ss.IsNew {
+	var (
+		ss   *sessions.Session
+		ok   bool
+		data render.TemplateData = render.NewTemplateData()
+	)
+	if ss, ok = rx.isInSession(r); ok {
 		http.Redirect(w, r, "/auth/login", http.StatusFound)
 		return
 	}
+
 	if r.Method == "GET" {
 		rx.rendr.HTML(w, http.StatusOK, "auth/register", data)
 		return
@@ -95,6 +100,7 @@ func (rx *Remix) Register(w http.ResponseWriter, r *http.Request) {
 		flash.Success("akaunti imefanikiwa kutengenezwa")
 		flash.Save(ss)
 		ss.Values["user"] = user.EmailAddress
+		ss.Values["isAuthorized"] = true
 		err = ss.Save(r, w)
 		if err != nil {
 			rx.rendr.HTML(w, http.StatusInternalServerError, "500", data)
@@ -116,12 +122,17 @@ func (rx *Remix) Register(w http.ResponseWriter, r *http.Request) {
 
 // Login logges in users.
 func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
-	ss, err := rx.sess.New(r, rx.cfg.SessionName)
-	if err != nil {
-		// log this
+	var (
+		ss    *sessions.Session
+		ok    bool
+		data  render.TemplateData = render.NewTemplateData()
+		flash *Flash              = NewFlash()
+	)
+
+	if ss, ok = rx.isInSession(r); ok {
+		http.Redirect(w, r, rx.cfg.LoginRedirect, http.StatusFound)
+		return
 	}
-	data := render.NewTemplateData()
-	flash := NewFlash()
 	if r.Method == "GET" {
 		fd := flash.Get(ss)
 		if fd != nil {
@@ -150,7 +161,12 @@ func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
 			rx.rendr.HTML(w, http.StatusOK, "auth/login", data)
 			return
 		}
+		ss, err = rx.sess.New(r, rx.cfg.SessionName)
+		if err != nil {
+			//log this
+		}
 		ss.Values["user"] = user.EmailAddress
+		ss.Values["isAuthorized"] = true
 		err = ss.Save(r, w)
 		if err != nil {
 			rx.rendr.HTML(w, http.StatusInternalServerError, "500", data)
@@ -163,20 +179,24 @@ func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
 
 // ServeImages serves images uploaded by users
 func (rx *Remix) ServeImages(w http.ResponseWriter, r *http.Request) {
-	vars := r.URL.Query()
-	imgID := vars.Get("iid")
-	profileID := vars.Get("pid")
+	var (
+		vars      url.Values = r.URL.Query()
+		imageID   string
+		profileID string
+	)
+	imageID = vars.Get("iid")
+	profileID = vars.Get("pid")
 
 	pic := &photo{}
 	pdb := getProfileDatabase(rx.cfg.DBDir, profileID, rx.cfg.DBExtension)
 	db := setDB(rx.db, pdb)
 
-	err := getAndUnmarshall(db, "photos", imgID, pic, "meta")
+	err := getAndUnmarshall(db, "photos", imageID, pic, "meta")
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-	raw := db.Get("photos", imgID, "data")
+	raw := db.Get("photos", imageID, "data")
 	if raw.Error != nil {
 		http.NotFound(w, r)
 		return
@@ -185,109 +205,111 @@ func (rx *Remix) ServeImages(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, picName, pic.UpdatedAt, bytes.NewReader(raw.Data))
 }
 
-type jsonUploads struct {
-	Error      string   `json:"errors"`
-	ProfilePic *photo   `json:"profile_photo"`
-	Photos     []*photo `json:"photos"`
-}
-
 // Uploads uploads files to the uploader's database
 func (rx *Remix) Uploads(w http.ResponseWriter, r *http.Request) {
-	ss, err := rx.sess.New(r, rx.cfg.SessionName)
-	if err != nil {
-		// log this
+	var (
+		ss   *sessions.Session
+		ok   bool
+		rst  []*photo
+		errs listErr
+	)
+	if ss, ok = rx.isInSession(r); !ok {
+		jr := &jsonUploads{Error: "not authorized"}
+		rx.rendr.JSON(w, http.StatusForbidden, jr)
+		return
 	}
 	if r.Method == "POST" {
-		if !ss.IsNew {
-			_, profile, err := getCurrentUserAndProfile(ss, rx)
+		_, profile, err := rx.getCurrentUserAndProfile(ss)
+		if err != nil {
+			jr := &jsonUploads{Error: err.Error()}
+			rx.rendr.JSON(w, http.StatusInternalServerError, jr)
+			return
+		}
+
+		pdbStr := getProfileDatabase(rx.cfg.DBDir, profile.ID, rx.cfg.DBExtension)
+		pdb := setDB(rx.db, pdbStr)
+
+		f, serr := GetFileUpload(r, rx.cfg.ProfilePicField)
+		if serr == nil {
+			pic, err := SaveUploadFile(pdb, f, profile)
 			if err != nil {
 				jr := &jsonUploads{Error: err.Error()}
 				rx.rendr.JSON(w, http.StatusInternalServerError, jr)
 				return
 			}
-
-			pdbStr := getProfileDatabase(rx.cfg.DBDir, profile.ID, rx.cfg.DBExtension)
-			pdb := setDB(rx.db, pdbStr)
-
-			f, serr := GetFileUpload(r, rx.cfg.ProfilePicField)
-			if serr == nil {
-				pic, err := SaveUploadFile(pdb, f, profile)
-				if err != nil {
-					jr := &jsonUploads{Error: err.Error()}
-					rx.rendr.JSON(w, http.StatusInternalServerError, jr)
-					return
-				}
-				profile.Picture = pic
-				err = UpdateProfile(pdb, profile, rx.cfg.ProfilesBucket)
-				if err != nil {
-					jr := &jsonUploads{Error: err.Error()}
-					rx.rendr.JSON(w, http.StatusInternalServerError, jr)
-					return
-				}
-				rx.rendr.JSON(w, http.StatusOK, pic)
-				return
-			}
-
-			files, ferr := GetMultipleFileUpload(r, rx.cfg.PhotosField)
-			if ferr != nil && len(files) > 0 || err == nil && len(files) > 0 {
-				var rst []*photo
-				var errs listErr
-				for _, v := range files {
-					pic, err := SaveUploadFile(pdb, v, profile)
-					if err != nil {
-						errs = append(errs, err)
-						continue
-					}
-					rst = append(rst, pic)
-				}
-				errs = append(errs, ferr)
-				if len(rst) == 0 && len(errs) > 0 {
-					jr := &jsonUploads{Error: err.Error()}
-					rx.rendr.JSON(w, http.StatusInternalServerError, jr)
-					return
-				}
-				profile.Photos = rst
-				err = UpdateProfile(pdb, profile, rx.cfg.ProfilesBucket)
-				if err != nil {
-					jr := &jsonUploads{Error: err.Error()}
-					rx.rendr.JSON(w, http.StatusInternalServerError, jr)
-					return
-				}
-				if serr != nil {
-					errs = append(errs, serr)
-				}
-				jr := &jsonUploads{Error: errs.Error(), Photos: rst}
-				rx.rendr.JSON(w, http.StatusOK, jr)
-				return
-			}
-			if serr != nil {
-				jr := &jsonUploads{Error: serr.Error()}
+			profile.Picture = pic
+			err = UpdateProfile(pdb, profile, rx.cfg.ProfilesBucket)
+			if err != nil {
+				jr := &jsonUploads{Error: err.Error()}
 				rx.rendr.JSON(w, http.StatusInternalServerError, jr)
 				return
 			}
+			rx.rendr.JSON(w, http.StatusOK, pic)
+			return
+		}
+
+		files, ferr := GetMultipleFileUpload(r, rx.cfg.PhotosField)
+		if ferr != nil && len(files) > 0 || err == nil && len(files) > 0 {
+			for _, v := range files {
+				pic, err := SaveUploadFile(pdb, v, profile)
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
+				rst = append(rst, pic)
+			}
+			errs = append(errs, ferr)
+			if len(rst) == 0 && len(errs) > 0 {
+				jr := &jsonUploads{Error: err.Error()}
+				rx.rendr.JSON(w, http.StatusInternalServerError, jr)
+				return
+			}
+			profile.Photos = rst
+			err = UpdateProfile(pdb, profile, rx.cfg.ProfilesBucket)
+			if err != nil {
+				jr := &jsonUploads{Error: err.Error()}
+				rx.rendr.JSON(w, http.StatusInternalServerError, jr)
+				return
+			}
+			if serr != nil {
+				errs = append(errs, serr)
+			}
+			jr := &jsonUploads{Error: errs.Error(), Photos: rst}
+			rx.rendr.JSON(w, http.StatusOK, jr)
+			return
+		}
+		if serr != nil {
+			jr := &jsonUploads{Error: serr.Error()}
+			rx.rendr.JSON(w, http.StatusInternalServerError, jr)
+			return
 		}
 	}
 }
 
-// switches databases
-func setDB(db nutz.Storage, dbname string) nutz.Storage {
-	d := db
-	d.DBName = dbname
-	return d
-}
-
-// Sets the InSession value, and and flash(which contains flash messages) to be used as
-// context in templates.
-func setSessionData(ss *sessions.Session, rx *Remix) render.TemplateData {
-	data := render.NewTemplateData()
-	flash := NewFlash()
-	fd := flash.Get(ss)
-	if fd != nil {
-		data.Add("flash", fd.Data)
+func (rx *Remix) isInSession(r *http.Request) (*sessions.Session, bool) {
+	var (
+		ss  *sessions.Session
+		err error
+	)
+	if ss, err = rx.sess.Get(r, rx.cfg.SessionName); err == nil {
+		if v, ok := ss.Values["isAuthorized"]; ok && v == true {
+			return ss, true
+		}
 	}
-	if !ss.IsNew {
+	return ss, false
+}
+func (rx *Remix) setSessionData(r *http.Request) render.TemplateData {
+	var (
+		data  render.TemplateData = render.NewTemplateData()
+		flash *Flash              = NewFlash()
+	)
+	if ss, ok := rx.isInSession(r); ok {
+		fd := flash.Get(ss)
+		if fd != nil {
+			data.Add("flash", fd.Data)
+		}
 		data.Add("InSession", true)
-		user, p, err := getCurrentUserAndProfile(ss, rx)
+		user, p, err := rx.getCurrentUserAndProfile(ss)
 		if err != nil {
 			return data
 		}
@@ -296,6 +318,29 @@ func setSessionData(ss *sessions.Session, rx *Remix) render.TemplateData {
 		return data
 	}
 	return data
+}
+func (rx *Remix) getCurrentUserAndProfile(ss *sessions.Session) (*User, *Profile, error) {
+	if e, ok := ss.Values["user"]; ok {
+		email := e.(string)
+		user, err := GetUser(setDB(rx.db, rx.cfg.AccountsDB), rx.cfg.AccountsBucket, email)
+		if err != nil {
+			return nil, nil, err
+		}
+		pdb := getProfileDatabase(rx.cfg.DBDir, user.UUID, rx.cfg.DBExtension)
+		p, err := GetProfile(setDB(rx.db, pdb), rx.cfg.ProfilesBucket, user.UUID)
+		if err != nil {
+			return nil, nil, err
+		}
+		return user, p, nil
+	}
+	return nil, nil, errors.New("aurora: session values not set")
+}
+
+// switches databases
+func setDB(db nutz.Storage, dbname string) nutz.Storage {
+	d := db
+	d.DBName = dbname
+	return d
 }
 
 // Sets basic configuration values which has use to the templates
@@ -309,19 +354,4 @@ func setConfigData(c *RemixConfig) render.TemplateData {
 	data.Add("RunMode", c.RunMode)
 	return data
 
-}
-
-// returns the current user, his profile and an error if any.
-func getCurrentUserAndProfile(ss *sessions.Session, rx *Remix) (*User, *Profile, error) {
-	email := ss.Values["user"].(string)
-	user, err := GetUser(setDB(rx.db, rx.cfg.AccountsDB), rx.cfg.AccountsBucket, email)
-	if err != nil {
-		return nil, nil, err
-	}
-	pdb := getProfileDatabase(rx.cfg.DBDir, user.UUID, rx.cfg.DBExtension)
-	p, err := GetProfile(setDB(rx.db, pdb), rx.cfg.ProfilesBucket, user.UUID)
-	if err != nil {
-		return nil, nil, err
-	}
-	return user, p, nil
 }

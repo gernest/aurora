@@ -117,8 +117,8 @@ func TestRemix_Register(t *testing.T) {
 	}
 	w.Reset() // reuse this buffer
 	io.Copy(w, res6.Body)
-	if !contains(w.String(), "login-form") {
-		t.Errorf("Expected login form")
+	if !contains(w.String(), "/auth/logout") {
+		t.Errorf("Expected login form got %s", w.String())
 	}
 
 	// making sure our password was encrypted

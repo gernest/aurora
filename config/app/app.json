@@ -14,5 +14,7 @@
 	"sessions_database":"db/sessions.bdb",
 	"sessions_bucket":"sessions",
 	"sessions_max_age":100,
-	"login_redirect":"/"
+	"login_redirect":"/",
+	"profile_pic_field":"profile",
+	"photos_field":"photos"
 }
