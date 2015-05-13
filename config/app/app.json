@@ -3,6 +3,7 @@
 	"url":"",
 	"cdn_mode":false,
 	"run_mode":"dev",
+	"dev_mode":true,
 	"title":"Aurora: The sweet like dating site",
 	"description":"online micro dating site",
 	"database_dir":"db",
@@ -13,8 +14,12 @@
 	"sessions_name":"_aurora",
 	"sessions_database":"db/sessions.bdb",
 	"sessions_bucket":"sessions",
-	"sessions_max_age":100,
+	"sessions_max_age":604800,
+	"session_path":"/",
 	"login_redirect":"/",
 	"profile_pic_field":"profile",
-	"photos_field":"photos"
+	"photos_field":"photos",
+	"messages_bucket":"messages",
+	"templates_extensions":[".html",".tpl",".tmpl"],
+	"templates_dir":"templates"
 }

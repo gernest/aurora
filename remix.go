@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/gorilla/mux"
+
 	"github.com/gernest/nutz"
 	"github.com/gernest/render"
 	"github.com/gorilla/sessions"
@@ -40,18 +42,50 @@ type RemixConfig struct {
 	SessionsDB     string `json:"sessions_database"`
 	SessionsBucket string `json:"sessions_bucket"`
 	SessMaxAge     int    `json:"sessions_max_age"`
+	SessionPath    string `json:"session_path"`
 
 	// The path to point to when login is success
 	LoginRedirect string `json:"login_redirect"`
 
 	ProfilePicField string `json:"profile_pic_field"`
 	PhotosField     string `json:"photos_field"`
+
+	MessagesBucket string `json:"messages_bucket"`
+
+	TemplatesExtensions []string `json:"templates_extensions"`
+	TemplatesDir        string   `json:"templates_dir"`
+	DevMode             bool     `json:"dev_mode"`
 }
 
 type jsonUploads struct {
 	Error      string   `json:"errors"`
 	ProfilePic *photo   `json:"profile_photo"`
 	Photos     []*photo `json:"photos"`
+}
+
+func NewRemix(cfg *RemixConfig) *Remix {
+	var (
+		secret []byte = []byte("my-top-secret")
+	)
+	rOpts := render.Options{
+		Directory:     cfg.TemplatesDir,
+		Extensions:    cfg.TemplatesExtensions,
+		IsDevelopment: cfg.DevMode,
+		DefaultData:   setConfigData(cfg),
+	}
+	sOpts := &sessions.Options{
+		MaxAge: cfg.SessMaxAge,
+		Path:   cfg.SessionPath,
+	}
+	db := nutz.NewStorage(cfg.SessionsDB, 0600, nil)
+	store := NewSessStore(db, cfg.SessionsBucket, 10, sOpts, secret)
+	rx := &Remix{
+		db:    db,
+		sess:  store,
+		rendr: render.New(rOpts),
+		cfg:   cfg,
+	}
+	return rx
 }
 
 // Home is the root path handler
@@ -284,6 +318,32 @@ func (rx *Remix) Uploads(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+func (rx *Remix) Logout(w http.ResponseWriter, r *http.Request) {
+	var (
+		ss  *sessions.Session
+		ok  bool
+		err error
+	)
+	if ss, ok = rx.isInSession(r); ok && ss != nil {
+		err = rx.sess.Delete(r, w, ss)
+		if err != nil {
+			// log this
+		}
+		http.Redirect(w, r, rx.cfg.LoginRedirect, http.StatusFound)
+		return
+	}
+}
+func (rx *Remix) Routes() *mux.Router {
+	h := mux.NewRouter()
+	h.HandleFunc("/", rx.Home)
+	h.HandleFunc("/auth/register", rx.Register).Methods("GET", "POST")
+	h.HandleFunc("/auth/login", rx.Login).Methods("GET", "POST")
+	h.HandleFunc("/auth/logout", rx.Logout)
+	h.HandleFunc("/imgs", rx.ServeImages).Methods("GET")
+	h.HandleFunc("/uploads", rx.Uploads)
+	return h
 }
 
 func (rx *Remix) isInSession(r *http.Request) (*sessions.Session, bool) {

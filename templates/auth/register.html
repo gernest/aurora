@@ -7,14 +7,14 @@
                 <div class="row">
                     <div class="input-field col s6">
                         <input id="first_name"
-                               type="text" class="validate" name="FirstName"
+                               type="text" class="validate" name="first_name"
                                required>
                         <label for="first_name" data-error="wrong"
                                data-success="right">First Name</label>
                     </div>
                     <div class="input-field col s6">
                         <input id="last_name" type="text" class="validate"
-                               name="LastName" required>
+                               name="last_name" required>
                         <label for="last_name" data-error="wrong"
                                data-success="right">Last Name</label>
                     </div>
@@ -32,7 +32,7 @@
                 <div class="row">
                     <div class="input-field col s12">
                         <input id="password" type="password" class="validate"
-                               name="Password" required>
+                               name="pass" required>
                         <label for="password" data-error="wrong"
                                data-success="right">Password</label>
                     </div>
@@ -45,8 +45,8 @@
                 <div class="row">
                     <div class="input-field col s12">
                         <input id="password2" type="password"
-                               class="validate" name="ConfirmPassword" required>
-                        <label for="password2" data-error="wrong"
+                               class="validate" name="confirm_pass" required>
+                        <label for="confirm_pass" data-error="wrong"
                                data-success="right"> Confirm Password</label>
                     </div>
                     {{if .errors.ConfirmPassword}}
@@ -58,7 +58,7 @@
                 <div class="row">
                     <div class="input-field col s12">
                         <input id="email" type="email" class="validate"
-                               name="Email" required>
+                               name="email_address" required>
                         <label for="email" data-error="wrong"
                                data-success="right">Email</label>
                     </div>

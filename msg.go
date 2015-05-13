@@ -8,17 +8,22 @@ import (
 )
 
 const (
-	mainRoom         string = "aurora"
-	sendEvt          string = "send"
-	receiveEvt       string = "receive"
-	ouboxBucket      string = "outbox"
-	inboxBucket      string = "inbox"
-	alertSendSuccess string = "send-uccess"
-	alertSendFailed  string = "send-failled"
+	mainRoom string = "aurora"
 
-	statusWrongMesage = iota
-	statusErrProcessing
-	statusOK
+	// events
+	sendEvt       string = "send"
+	receiveEvt    string = "receive"
+	sendFailedEvt string = "sendFailed"
+
+	// message buckets
+	ouboxBucket string = "outbox"
+	inboxBucket string = "inbox"
+	draftBucket string = "drafts"
+
+	// message allerts
+	alertSendSuccess string = "sendSuccess"
+	alertSendFailed  string = "sendFailled"
+	alertInbox       string = "messageInbox"
 )
 
 // MSG this is the base message exchanged between users
@@ -77,44 +82,101 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 			p := m.currentUser(conn)
 			if p != nil {
 				if p.ID != data.SenderID {
-					data.Status = statusWrongMesage
+					data.Status = http.StatusBadRequest
 					msg.SetEvent(alertSendFailed)
 					msg.SetData(data)
 					return msg
 				}
 				err := m.saveMsg(ouboxBucket, p.ID, data)
 				if err != nil {
-					data.Status = statusErrProcessing
+					data.Status = http.StatusInternalServerError
 					msg.SetEvent(alertSendFailed)
 					msg.SetData(data)
 					return msg
 				}
 				if m.isOnline(data.RecipientID) {
 					m.rm.Emit(data.RecipientID, receiveEvt, data)
+					data.Status = http.StatusOK
+					msg.SetEvent(alertSendSuccess)
+					msg.SetData(data)
+					return msg
 				} else {
 					err := m.saveMsg(inboxBucket, data.RecipientID, data)
 					if err != nil {
-						data.Status = statusErrProcessing
+						data.Status = http.StatusInternalServerError
 						msg.SetEvent(alertSendFailed)
 						msg.SetData(data)
 						return msg
 					}
-					data.Status = statusOK
+					data.Status = http.StatusOK
 					msg.SetEvent(alertSendSuccess)
 					msg.SetData(data)
 					return msg
 				}
 			}
 		}
+	case receiveEvt:
+		switch data := msg.GetData().(type) {
+		case *MSG:
+			p := m.currentUser(conn)
+			if p != nil {
+				if p.ID == data.RecipientID {
+					err := m.saveMsg(inboxBucket, p.ID, data)
+					if err != nil {
+						if m.isOnline(data.SenderID) {
+							// inform the sender that sending failed
+							m.rm.Emit(data.SenderID, sendFailedEvt, data)
+						}
+						data.Status = http.StatusInternalServerError
+						msg.SetData(data)
+						return msg
+					}
+					data.Status = http.StatusOK
+					msg.SetEvent(alertInbox)
+					msg.SetData(data)
+					return msg
+				}
+			}
+		}
+	case sendFailedEvt:
+		switch data := msg.GetData().(type) {
+		case *MSG:
+			p := m.currentUser(conn)
+			if p != nil {
+				err := m.deletMsg(inboxBucket, p.ID, data)
+				if err != nil {
+					data.Status = http.StatusInternalServerError
+					msg.SetData(data)
+					return msg
+				}
+				err = m.saveMsg(draftBucket, p.ID, data)
+				if err != nil {
+					data.Status = http.StatusInternalServerError
+					msg.SetData(data)
+					return msg
+				}
+				msg.SetEvent(alertSendFailed)
+				return msg
+			}
+
+		}
 
 	}
 	return msg
 }
-func (m *Messenger) saveMsg(to string, profileID string, msg *MSG) error {
-	msg.ID = getUUID()
+func (m *Messenger) saveMsg(bucket string, profileID string, msg *MSG) error {
+	if msg.ID == "" {
+		msg.ID = getUUID()
+	}
 	pdb := getProfileDatabase(m.rx.cfg.DBDir, profileID, m.rx.cfg.DBExtension)
 	mdb := setDB(m.rx.db, pdb)
-	return marshalAndCreate(mdb, msg, to, msg.ID)
+	return marshalAndCreate(mdb, msg, bucket, msg.ID, m.rx.cfg.MessagesBucket)
+}
+func (m *Messenger) deletMsg(bucket, profileID string, msg *MSG) error {
+	pdb := getProfileDatabase(m.rx.cfg.DBDir, profileID, m.rx.cfg.DBExtension)
+	mdb := setDB(m.rx.db, pdb)
+	mdb.Delete(bucket, msg.ID, m.rx.cfg.MessagesBucket)
+	return mdb.Error
 }
 func (m *Messenger) currentUser(conn *golem.Connection) *Profile {
 	pdb := getProfileDatabase(m.rx.cfg.DBDir, conn.UserID, m.rx.cfg.DBExtension)

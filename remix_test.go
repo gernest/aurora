@@ -12,10 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/gernest/render"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 )
 
 var pass = "mamamia"
@@ -333,6 +329,44 @@ func TestRemixt_ServeImages(t *testing.T) {
 	if res.StatusCode != http.StatusOK {
 		t.Errorf("Expected %d got %d", http.StatusOK, res.StatusCode)
 	}
+
+}
+
+func TestRemix_Logout(t *testing.T) {
+	ts, client, _ := testServer(t)
+	defer ts.Close()
+	lform := url.Values{
+		"email":    {"gernest@aurora.com"},
+		"password": {pass},
+	}
+	loginURL := fmt.Sprintf("%s/auth/login", ts.URL)
+	outURL := fmt.Sprintf("%s/auth/logout", ts.URL)
+	res, err := client.PostForm(loginURL, lform)
+	defer res.Body.Close()
+	if err != nil {
+		t.Error(err)
+	}
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("Ecpected %d got %d", http.StatusOK, res.StatusCode)
+	}
+	w := &bytes.Buffer{}
+	io.Copy(w, res.Body)
+	if !contains(w.String(), "search") {
+		t.Error("Expected InSession to be set")
+	}
+	res2, err := client.Get(outURL)
+	defer res2.Body.Close()
+	if err != nil {
+		t.Error(err)
+	}
+	if res2.StatusCode != http.StatusOK {
+		t.Errorf("Ecpected %d got %d", http.StatusOK, res2.StatusCode)
+	}
+	w.Reset()
+	io.Copy(w, res2.Body)
+	if contains(w.String(), "search") {
+		t.Error("Expected not to be in session")
+	}
 }
 
 // This cleans up all the remix based test databases
@@ -344,45 +378,29 @@ func TestClean_remix(t *testing.T) {
 // to use client, that supports sessions.
 func testServer(t *testing.T) (*httptest.Server, *http.Client, *Remix) {
 	cfg := &RemixConfig{
-		AccountsBucket:  "accounts",
-		SessionName:     "aurora",
-		LoginRedirect:   "/",
-		DBDir:           "fixture",
-		DBExtension:     ".bdb",
-		AccountsDB:      "fixture/accounts.bdb",
-		ProfilesBucket:  "profiles",
-		SessionsDB:      "fixture/sessions.bdb",
-		SessionsBucket:  sBucket,
-		ProfilePicField: "profile",
-		PhotosField:     "photos",
+		AccountsBucket:      "accounts",
+		SessionName:         "aurora",
+		LoginRedirect:       "/",
+		DBDir:               "fixture",
+		DBExtension:         ".bdb",
+		AccountsDB:          "fixture/accounts.bdb",
+		ProfilesBucket:      "profiles",
+		SessionsDB:          "fixture/sessions.bdb",
+		SessionsBucket:      sBucket,
+		ProfilePicField:     "profile",
+		PhotosField:         "photos",
+		TemplatesDir:        "templates",
+		TemplatesExtensions: []string{".tmpl", ".html", ".tpl"},
+		SessMaxAge:          30,
+		SessionPath:         "/",
 	}
-
-	rOpts := render.Options{
-		Directory:     "templates",
-		Extensions:    []string{".tmpl", ".html", ".tpl"},
-		IsDevelopment: true,
-		DefaultData:   setConfigData(cfg),
-	}
-	sOpts := &sessions.Options{MaxAge: maxAge, Path: sPath}
-	store := NewSessStore(setDB(testDb, cfg.SessionsDB), cfg.SessionsBucket, 10, sOpts, secret)
-	rx := &Remix{
-		db:    testDb,
-		sess:  store,
-		rendr: render.New(rOpts),
-		cfg:   cfg,
-	}
+	rx := NewRemix(cfg)
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		t.Error(err)
 	}
 	client := &http.Client{Jar: jar}
-	h := mux.NewRouter()
-	h.HandleFunc("/", rx.Home)
-	h.HandleFunc("/auth/register", rx.Register)
-	h.HandleFunc("/auth/login", rx.Login).Methods("GET", "POST")
-	h.HandleFunc("/imgs", rx.ServeImages).Methods("GET")
-	h.HandleFunc("/uploads", rx.Uploads)
-	ts := httptest.NewServer(h)
+	ts := httptest.NewServer(rx.Routes())
 	return ts, client, rx
 }
 
