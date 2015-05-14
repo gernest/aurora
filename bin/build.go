@@ -74,7 +74,7 @@ func (a *AuroraCLI) CreateBinary() {
 	a.log("==>Creating executable")
 	o := filepath.Join(a.cfg.Dest, filepath.Join(a.cfg.Version, a.cfg.AppName))
 	src := filepath.Join(a.cfg.Src, a.cfg.AppName+".go")
-	out, err := exec.Command("go", "build", "-o", o, "-v", src).Output()
+	out, err := exec.Command("godep","go", "build", "-o", o, "-v", src).Output()
 	a.logErr(err)
 	if len(out) > 0 {
 		a.log(fmt.Sprintf("%s", out))

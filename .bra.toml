@@ -14,7 +14,7 @@ watch_exts = [".go",".html",".js",".css"]
 build_delay = 1500		# Minimal interval to Trigger build event
 cmds = [
 	["goimports","-w=true","."],
-	["go","run","bin/build.go","-v"],
+	["godep","go","run","bin/build.go","-v"],
 	["./builds/0.0.1/aurora"]
 
 ]
