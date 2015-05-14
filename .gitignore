@@ -108,3 +108,4 @@ crashlytics-build.properties
 
 builds
 db
+Godeps/_workspace

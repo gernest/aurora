@@ -320,6 +320,7 @@ func (rx *Remix) Uploads(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Logout deletes current session
 func (rx *Remix) Logout(w http.ResponseWriter, r *http.Request) {
 	var (
 		ss  *sessions.Session
@@ -335,6 +336,8 @@ func (rx *Remix) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// Routes returs a mux of all registered routes
 func (rx *Remix) Routes() *mux.Router {
 	h := mux.NewRouter()
 	h.HandleFunc("/", rx.Home)

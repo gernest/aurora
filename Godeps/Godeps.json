@@ -1,0 +1,66 @@
+{
+	"ImportPath": "github.com/gernest/aurora",
+	"GoVersion": "go1.3.3",
+	"Deps": [
+		{
+			"ImportPath": "github.com/asaskevich/govalidator",
+			"Comment": "v1",
+			"Rev": "68d5221a67affc98529c25b1fbfeb69212a4dc8b"
+		},
+		{
+			"ImportPath": "github.com/bluele/gforms",
+			"Rev": "da879f29e0ad3e22e5d52bb1efce98787fd082c6"
+		},
+		{
+			"ImportPath": "github.com/boltdb/bolt",
+			"Comment": "v1.0-74-g550b8c7",
+			"Rev": "550b8c7cb64d61665aefda8dd52ad8c34e725be5"
+		},
+		{
+			"ImportPath": "github.com/gernest/golem",
+			"Rev": "c7d044604cabaf36ac9659e0ba32bbf6c5060f87"
+		},
+		{
+			"ImportPath": "github.com/gernest/nutz",
+			"Rev": "930402b1af8c9e64a51446b94618b355951a80ff"
+		},
+		{
+			"ImportPath": "github.com/gernest/render",
+			"Rev": "a3783ff0a04d4c2cb244789b68e216395b5d457c"
+		},
+		{
+			"ImportPath": "github.com/gorilla/context",
+			"Rev": "215affda49addc4c8ef7e2534915df2c8c35c6cd"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Rev": "660d31f8602b95058fed6833debf113e85350868"
+		},
+		{
+			"ImportPath": "github.com/gorilla/securecookie",
+			"Rev": "8e98dd730fc43f1383f19615db6f2e702c9738e8"
+		},
+		{
+			"ImportPath": "github.com/gorilla/sessions",
+			"Rev": "f61c3ec2cf65d69e7efedfd4d060fe128882c951"
+		},
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Rev": "2dbddebb8266b93c5e6b119efb54e89043186f3f"
+		},
+		{
+			"ImportPath": "github.com/nu7hatch/gouuid",
+			"Rev": "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/bcrypt",
+			"Comment": "null-236",
+			"Rev": "69e2a90ed92d03812364aeb947b7068dc42e561e"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/blowfish",
+			"Comment": "null-236",
+			"Rev": "69e2a90ed92d03812364aeb947b7068dc42e561e"
+		}
+	]
+}
