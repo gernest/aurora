@@ -3,6 +3,7 @@ package aurora
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -11,6 +12,12 @@ import (
 	"github.com/gernest/nutz"
 	"github.com/gernest/render"
 	"github.com/gorilla/sessions"
+)
+
+var (
+	errNotFound       error = errors.New("samahani kitu ulichoulizia hatujakipata")
+	errInternalServer error = errors.New("du! naona imezingua, jaribu tena badae")
+	errForbidden      error = errors.New("du! hauna ruhususa ya kufika kwenye hii kurasa")
 )
 
 // Remix all the fun is here
@@ -62,11 +69,12 @@ type jsonUploads struct {
 	ProfilePic *photo   `json:"profile_photo"`
 	Photos     []*photo `json:"photos"`
 }
+type jsonErr struct {
+	Text string `json:"test"`
+}
 
 func NewRemix(cfg *RemixConfig) *Remix {
-	var (
-		secret []byte = []byte("my-top-secret")
-	)
+	secret := []byte("my-top-secret")
 	rOpts := render.Options{
 		Directory:     cfg.TemplatesDir,
 		Extensions:    cfg.TemplatesExtensions,
@@ -154,7 +162,7 @@ func (rx *Remix) Register(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// Login logges in users.
+// Login creates new session for a user
 func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
 	var (
 		ss    *sessions.Session
@@ -214,28 +222,29 @@ func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
 // ServeImages serves images uploaded by users
 func (rx *Remix) ServeImages(w http.ResponseWriter, r *http.Request) {
 	var (
-		vars      url.Values = r.URL.Query()
-		imageID   string
-		profileID string
+		vars        url.Values = r.URL.Query()
+		imageID     string     = vars.Get("iid")
+		profileID   string     = vars.Get("pid")
+		pic         *photo     = &photo{}
+		photoBucket string     = "photos"
+		metaBucket  string     = "meta"
+		dataBucket  string     = "data"
 	)
-	imageID = vars.Get("iid")
-	profileID = vars.Get("pid")
 
-	pic := &photo{}
 	pdb := getProfileDatabase(rx.cfg.DBDir, profileID, rx.cfg.DBExtension)
 	db := setDB(rx.db, pdb)
 
-	err := getAndUnmarshall(db, "photos", imageID, pic, "meta")
+	err := getAndUnmarshall(db, photoBucket, imageID, pic, metaBucket)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-	raw := db.Get("photos", imageID, "data")
+	raw := db.Get(photoBucket, imageID, dataBucket)
 	if raw.Error != nil {
 		http.NotFound(w, r)
 		return
 	}
-	picName := pic.ID + "." + pic.Type
+	picName := fmt.Sprintf("%s.%s", pic.ID, pic.Type)
 	http.ServeContent(w, r, picName, pic.UpdatedAt, bytes.NewReader(raw.Data))
 }
 
@@ -322,19 +331,135 @@ func (rx *Remix) Uploads(w http.ResponseWriter, r *http.Request) {
 
 // Logout deletes current session
 func (rx *Remix) Logout(w http.ResponseWriter, r *http.Request) {
-	var (
-		ss  *sessions.Session
-		ok  bool
-		err error
-	)
-	if ss, ok = rx.isInSession(r); ok && ss != nil {
-		err = rx.sess.Delete(r, w, ss)
+	if ss, ok := rx.isInSession(r); ok && ss != nil {
+		err := rx.sess.Delete(r, w, ss)
 		if err != nil {
 			// log this
 		}
 		http.Redirect(w, r, rx.cfg.LoginRedirect, http.StatusFound)
 		return
 	}
+}
+
+// Profile viewing and updating profile
+func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
+	var (
+		vars   url.Values          = r.URL.Query()
+		data   render.TemplateData = rx.setSessionData(r)
+		id     string              = vars.Get("id")
+		view   string              = vars.Get("view")
+		all    string              = vars.Get("all")
+		update string              = vars.Get("u")
+		flash  *Flash
+		ss     *sessions.Session
+		ok     bool
+	)
+
+	if r.Method == "GET" {
+		pdb := getProfileDatabase(rx.cfg.DBDir, id, rx.cfg.DBExtension)
+		if id != "" && view == "true" && all != "true" {
+			if rx.isAjax(r) {
+				p, err := GetProfile(setDB(rx.db, pdb), rx.cfg.ProfilesBucket, id)
+				if err != nil {
+					// TODO: log this err
+					rx.rendr.JSON(w, http.StatusNotFound, &jsonErr{errNotFound.Error()})
+					return
+				}
+				rx.rendr.JSON(w, http.StatusOK, p)
+			}
+			p, err := GetProfile(setDB(rx.db, pdb), rx.cfg.ProfilesBucket, id)
+			if err != nil {
+				data.Add("error", errNotFound)
+				rx.rendr.HTML(w, http.StatusNotFound, "404", data)
+				return
+			}
+			data.Add("profile", p)
+			rx.rendr.HTML(w, http.StatusOK, "profile/home", data)
+			return
+		}
+		if all == "true" && view == "true" {
+			p, err := rx.getAllProfiles()
+			if rx.isAjax(r) {
+				if err != nil {
+					// TODO: log this err
+					rx.rendr.JSON(w, http.StatusNotFound, &jsonErr{errNotFound.Error()})
+					return
+				}
+				if p != nil {
+					rx.rendr.JSON(w, http.StatusOK, p)
+					return
+				}
+
+			}
+			if err != nil {
+				data.Add("error", errNotFound)
+				rx.rendr.HTML(w, http.StatusNotFound, "404", data)
+				return
+			}
+			data.Add("profiles", p)
+			rx.rendr.HTML(w, http.StatusOK, "profile/home", data)
+			return
+		}
+	}
+	if r.Method == "POST" {
+		if update == "true" {
+			//form := ComposeProfileForm()(r)
+			if ss, ok = rx.isInSession(r); ok {
+				_, p, err := rx.getCurrentUserAndProfile(ss)
+				if err != nil {
+					if rx.isAjax(r) {
+						rx.rendr.JSON(w, http.StatusInternalServerError, &jsonErr{errInternalServer.Error()})
+						return
+					}
+					data.Add("error", errInternalServer.Error())
+					rx.rendr.HTML(w, http.StatusInternalServerError, "500", data)
+					return
+
+				}
+				if p.ID != id {
+					if rx.isAjax(r) {
+						rx.rendr.JSON(w, http.StatusForbidden, &jsonErr{errForbidden.Error()})
+						return
+					}
+					data.Add("error", errForbidden.Error())
+					rx.rendr.HTML(w, http.StatusInternalServerError, "403", data)
+					return
+				}
+
+			}
+			if rx.isAjax(r) {
+				rx.rendr.JSON(w, http.StatusForbidden, &jsonErr{errForbidden.Error()})
+				return
+			}
+			flash = NewFlash()
+			flash.Error("unatakiwa uingie kwanza kabla ya kupata ruhusa ya kutumia hii kurasa")
+			flash.Save(ss)
+			http.Redirect(w, r, "/auth/login", http.StatusFound)
+			return
+		}
+	}
+}
+
+func (rx *Remix) getAllProfiles() ([]*Profile, error) {
+	var rst []*Profile
+	usrs, err := GetAllUsers(setDB(rx.db, rx.cfg.AccountsDB), rx.cfg.AccountsBucket)
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range usrs {
+		pdb := getProfileDatabase(rx.cfg.DBDir, v, rx.cfg.DBExtension)
+		p, err := GetProfile(setDB(rx.db, pdb), rx.cfg.ProfilesBucket, v)
+		if err != nil {
+			// log this
+		}
+		if p != nil {
+			rst = append(rst, p)
+		}
+	}
+	if len(rst) == 0 {
+		return nil, errNotFound
+	}
+	return rst, nil
 }
 
 // Routes returs a mux of all registered routes
@@ -346,6 +471,7 @@ func (rx *Remix) Routes() *mux.Router {
 	h.HandleFunc("/auth/logout", rx.Logout)
 	h.HandleFunc("/imgs", rx.ServeImages).Methods("GET")
 	h.HandleFunc("/uploads", rx.Uploads)
+	h.HandleFunc("/profile", rx.Profile)
 	return h
 }
 
@@ -417,4 +543,8 @@ func setConfigData(c *RemixConfig) render.TemplateData {
 	data.Add("RunMode", c.RunMode)
 	return data
 
+}
+
+func (rx *Remix) isAjax(r *http.Request) bool {
+	return r.Header.Get("X-Requested-With") == "XMLHttpRequest"
 }

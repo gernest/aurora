@@ -1,6 +1,10 @@
 package aurora
 
-import "github.com/gernest/nutz"
+import (
+	"encoding/json"
+
+	"github.com/gernest/nutz"
+)
 
 // CreateAccount creates a new record in the bucket, using email as key
 func CreateAccount(db nutz.Storage, a Account, bucket string) error {
@@ -15,4 +19,24 @@ func GetUser(db nutz.Storage, bucket, email string, nest ...string) (*User, erro
 		return nil, err
 	}
 	return usr, nil
+}
+
+// GetAllUsers returns a slice of all users
+func GetAllUsers(db nutz.Storage, bucket string, nest ...string) ([]string, error) {
+	var usrs []string
+	d := db.GetAll(bucket, nest...)
+	if d.Error != nil {
+		return nil, d.Error
+	}
+	for _, v := range d.DataList {
+		us := &User{}
+		err := json.Unmarshal(v, us)
+		if err != nil {
+			// log thus
+		}
+		if err == nil {
+			usrs = append(usrs, us.UUID)
+		}
+	}
+	return usrs, nil
 }

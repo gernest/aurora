@@ -8,23 +8,28 @@ var (
 		"e6917dfe-b4f6-49b8-5628-83dd2a430e9a",
 		"bc5288cf-4120-4f3c-5957-b19e093a12f4",
 	}
-	pBucket = "profiles"
 )
 
 func TestCreateProfile(t *testing.T) {
+	var (
+		pBucket = "profiles"
+		err     error
+	)
 	for _, id := range pids {
 		p := &Profile{ID: id}
-		err := CreateProfile(testDb, p, pBucket)
+		err = CreateProfile(testDb, p, pBucket)
 		if err != nil {
 			t.Error(err)
 		}
 	}
-	err := CreateProfile(testDb, &Profile{ID: pids[0]}, pBucket)
+	err = CreateProfile(testDb, &Profile{ID: pids[0]}, pBucket)
 	if err == nil {
 		t.Error("Expected an error")
 	}
 }
 func TestGetProfile(t *testing.T) {
+	var pBucket = "profiles"
+
 	for _, id := range pids {
 		p, err := GetProfile(testDb, pBucket, id)
 		if err != nil {
@@ -46,6 +51,7 @@ func TestUpdateProfile(t *testing.T) {
 	var (
 		city    = "mwanza"
 		country = "Tanzania"
+		pBucket = "profiles"
 	)
 	for _, id := range pids {
 		p, err := GetProfile(testDb, pBucket, id)

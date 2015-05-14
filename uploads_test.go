@@ -90,6 +90,9 @@ func TestGetMultipleFileUpload(t *testing.T) {
 	testListErr(t)
 }
 func TestSaveUploadFile(t *testing.T) {
+	var (
+		pBucket = "profiles"
+	)
 	// JPG
 	id := "db0668ac-7eba-40dd-56ee-0b1c0b9b415p"
 	pdb := setDB(testDb, "fixture/uploads.bdb")

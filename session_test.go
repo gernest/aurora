@@ -9,15 +9,6 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-var (
-	maxAge  = 30
-	sPath   = "/"
-	cName   = "youngWarlock"
-	sBucket = "sessions"
-	secret  = []byte("my-secret")
-	testURL = "http://www.example.com"
-)
-
 func TestSession_New(t *testing.T) {
 	store, req := sessSetup(t)
 	testNewSess(store, req, t)
@@ -30,6 +21,12 @@ func TestSession_Save(t *testing.T) {
 }
 
 func TestSess_Get(t *testing.T) {
+	var (
+		maxAge int    = 30
+		sPath  string = "/"
+		cName  string = "youngWarlock"
+		secret []byte = []byte("my-secret")
+	)
 	opts := &sessions.Options{MaxAge: maxAge, Path: sPath}
 	store, req := sessSetup(t)
 	s := testSaveSess(store, req, t, "user", "gernest")
@@ -72,6 +69,13 @@ func TestClean_session(t *testing.T) {
 }
 
 func sessSetup(t *testing.T) (*Session, *http.Request) {
+	var (
+		maxAge  int    = 30
+		sPath   string = "/"
+		sBucket string = "sessions"
+		secret  []byte = []byte("my-secret")
+		testURL string = "http://www.example.com"
+	)
 	opts := &sessions.Options{MaxAge: maxAge, Path: sPath}
 	store := NewSessStore(testDb, sBucket, 10, opts, secret)
 	req, err := http.NewRequest("GET", testURL, nil)
@@ -82,6 +86,8 @@ func sessSetup(t *testing.T) (*Session, *http.Request) {
 }
 
 func testNewSess(ss *Session, req *http.Request, t *testing.T) *sessions.Session {
+	var cName string = "youngWarlock"
+
 	s, err := ss.New(req, cName)
 	if err == nil {
 		if !s.IsNew {
