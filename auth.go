@@ -6,12 +6,13 @@ import (
 	"github.com/gernest/nutz"
 )
 
-// CreateAccount creates a new record in the bucket, using email as key
+// CreateAccount creates a new account, where id will be the value returned by
+// invoking Email() method.
 func CreateAccount(db nutz.Storage, a Account, bucket string) error {
 	return createIfNotexist(db, a, bucket, a.Email())
 }
 
-// GetUser retrives a user from the database
+// GetUser retrives a user.
 func GetUser(db nutz.Storage, bucket, email string, nest ...string) (*User, error) {
 	usr := &User{}
 	err := getAndUnmarshall(db, bucket, email, usr)
@@ -21,7 +22,7 @@ func GetUser(db nutz.Storage, bucket, email string, nest ...string) (*User, erro
 	return usr, nil
 }
 
-// GetAllUsers returns a slice of all users
+// GetAllUsers returns a slice of all users.
 func GetAllUsers(db nutz.Storage, bucket string, nest ...string) ([]string, error) {
 	var usrs []string
 	d := db.GetAll(bucket, nest...)

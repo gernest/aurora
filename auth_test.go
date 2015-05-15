@@ -34,9 +34,9 @@ func TestGetUser(t *testing.T) {
 }
 func TestGetAll(t *testing.T) {
 	var (
+		testBucket = "test buck"
 		origin     string
 		curr       []string
-		testBucket string = "test buck"
 		err        error
 	)
 

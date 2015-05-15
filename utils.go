@@ -75,7 +75,7 @@ func (f *Flash) Error(msg string) {
 	f.Data["FlashError"] = msg
 }
 
-// Add saves the flsah to the given session
+// Save saves the flsah to the given session
 func (f *Flash) Save(s *sessions.Session) {
 	data, err := json.Marshal(f)
 	if err == nil {

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/gorilla/mux"
 
@@ -15,9 +14,9 @@ import (
 )
 
 var (
-	errNotFound       error = errors.New("samahani kitu ulichoulizia hatujakipata")
-	errInternalServer error = errors.New("du! naona imezingua, jaribu tena badae")
-	errForbidden      error = errors.New("du! hauna ruhususa ya kufika kwenye hii kurasa")
+	errNotFound       = errors.New("samahani kitu ulichoulizia hatujakipata")
+	errInternalServer = errors.New("du! naona imezingua, jaribu tena badae")
+	errForbidden      = errors.New("du! hauna ruhususa ya kufika kwenye hii kurasa")
 )
 
 // Remix all the fun is here
@@ -66,13 +65,14 @@ type RemixConfig struct {
 
 type jsonUploads struct {
 	Error      string   `json:"errors"`
-	ProfilePic *photo   `json:"profile_photo"`
-	Photos     []*photo `json:"photos"`
+	ProfilePic *Photo   `json:"profile_photo"`
+	Photos     []*Photo `json:"photos"`
 }
 type jsonErr struct {
 	Text string `json:"test"`
 }
 
+// NewRemix iitialize a *Remix instance using the given cfg
 func NewRemix(cfg *RemixConfig) *Remix {
 	secret := []byte("my-top-secret")
 	rOpts := render.Options{
@@ -96,18 +96,18 @@ func NewRemix(cfg *RemixConfig) *Remix {
 	return rx
 }
 
-// Home is the root path handler
+// Home is where the homepage is
 func (rx *Remix) Home(w http.ResponseWriter, r *http.Request) {
 	data := rx.setSessionData(r)
 	rx.rendr.HTML(w, http.StatusOK, "home", data)
 }
 
-// Register creates a ew user accounts
+// Register creates a new user account
 func (rx *Remix) Register(w http.ResponseWriter, r *http.Request) {
 	var (
-		data         render.TemplateData = render.NewTemplateData()
-		loginPath    string              = "/auth/login"
-		registerPath string              = "auth/register"
+		data         = render.NewTemplateData()
+		loginPath    = "/auth/login"
+		registerPath = "auth/register"
 		ok           bool
 		ss           *sessions.Session
 	)
@@ -167,9 +167,9 @@ func (rx *Remix) Register(w http.ResponseWriter, r *http.Request) {
 // Login creates new session for a user
 func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
 	var (
-		data      render.TemplateData = render.NewTemplateData()
-		flash     *Flash              = NewFlash()
-		loginPath string              = "auth/login"
+		data      = render.NewTemplateData()
+		flash     = NewFlash()
+		loginPath = "auth/login"
 		ok        bool
 		ss        *sessions.Session
 	)
@@ -225,13 +225,13 @@ func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
 // ServeImages serves images uploaded by users
 func (rx *Remix) ServeImages(w http.ResponseWriter, r *http.Request) {
 	var (
-		vars        url.Values = r.URL.Query()
-		pic         *photo     = &photo{}
-		imageID     string     = vars.Get("iid")
-		profileID   string     = vars.Get("pid")
-		photoBucket string     = "photos"
-		metaBucket  string     = "meta"
-		dataBucket  string     = "data"
+		vars        = r.URL.Query()
+		pic         = &Photo{}
+		imageID     = vars.Get("iid")
+		profileID   = vars.Get("pid")
+		photoBucket = "photos"
+		metaBucket  = "meta"
+		dataBucket  = "data"
 	)
 
 	pdb := getProfileDatabase(rx.cfg.DBDir, profileID, rx.cfg.DBExtension)
@@ -251,12 +251,12 @@ func (rx *Remix) ServeImages(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, picName, pic.UpdatedAt, bytes.NewReader(raw.Data))
 }
 
-// Uploads uploads files to the uploader's database
+// Uploads uploads files
 func (rx *Remix) Uploads(w http.ResponseWriter, r *http.Request) {
 	var (
 		ok   bool
 		ss   *sessions.Session
-		rst  []*photo
+		rst  []*Photo
 		errs listErr
 	)
 	if ss, ok = rx.isInSession(r); !ok {
@@ -347,14 +347,14 @@ func (rx *Remix) Logout(w http.ResponseWriter, r *http.Request) {
 // Profile viewing and updating profile
 func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 	var (
-		vars        url.Values          = r.URL.Query()
-		data        render.TemplateData = rx.setSessionData(r)
-		id          string              = vars.Get("id")
-		view        string              = vars.Get("view")
-		all         string              = vars.Get("all")
-		update      string              = vars.Get("u")
-		profileHome string              = "profile/home"
-		loginPath   string              = "/auth/login"
+		vars        = r.URL.Query()
+		data        = rx.setSessionData(r)
+		id          = vars.Get("id")
+		view        = vars.Get("view")
+		all         = vars.Get("all")
+		update      = vars.Get("u")
+		profileHome = "profile/home"
+		loginPath   = "/auth/login"
 		ok          bool
 		flash       *Flash
 		ss          *sessions.Session
@@ -471,13 +471,13 @@ func (rx *Remix) getAllProfiles() ([]*Profile, error) {
 // Routes returs a mux of all registered routes
 func (rx *Remix) Routes() *mux.Router {
 	var (
-		homePath     string = "/"
-		registerPath string = "/auth/register"
-		loginPath    string = "/auth/login"
-		logoutPath   string = "/auth/logout"
-		imagesPath   string = "/imgs"
-		uploadsPath  string = "/uploads"
-		profilePath  string = "/profile"
+		homePath     = "/"
+		registerPath = "/auth/register"
+		loginPath    = "/auth/login"
+		logoutPath   = "/auth/logout"
+		imagesPath   = "/imgs"
+		uploadsPath  = "/uploads"
+		profilePath  = "/profile"
 	)
 	h := mux.NewRouter()
 	h.HandleFunc(homePath, rx.Home)
@@ -504,8 +504,8 @@ func (rx *Remix) isInSession(r *http.Request) (*sessions.Session, bool) {
 }
 func (rx *Remix) setSessionData(r *http.Request) render.TemplateData {
 	var (
-		data  render.TemplateData = render.NewTemplateData()
-		flash *Flash              = NewFlash()
+		data  = render.NewTemplateData()
+		flash = NewFlash()
 	)
 	if ss, ok := rx.isInSession(r); ok {
 		fd := flash.Get(ss)
@@ -523,6 +523,7 @@ func (rx *Remix) setSessionData(r *http.Request) render.TemplateData {
 	}
 	return data
 }
+
 func (rx *Remix) getCurrentUserAndProfile(ss *sessions.Session) (*User, *Profile, error) {
 	if e, ok := ss.Values["user"]; ok {
 		email := e.(string)
@@ -560,6 +561,7 @@ func setConfigData(c *RemixConfig) render.TemplateData {
 
 }
 
+// checks if the request is ajax
 func (rx *Remix) isAjax(r *http.Request) bool {
 	return r.Header.Get("X-Requested-With") == "XMLHttpRequest"
 }

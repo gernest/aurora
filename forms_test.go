@@ -93,8 +93,8 @@ func TestBirthDateValidator(t *testing.T) {
 		vars       url.Values
 		err        error
 		form       *gforms.FormInstance
-		now        time.Time               = time.Now()
-		yearsAgo   func(yrs int) time.Time = func(yrs int) time.Time {
+		now        = time.Now()
+		yearsAgo   = func(yrs int) time.Time {
 			n := time.Now()
 			nowAFter := n.AddDate(18, 1, 1)
 			dur := nowAFter.Sub(n)

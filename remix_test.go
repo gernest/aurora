@@ -16,7 +16,7 @@ import (
 
 func TestRemix_Home(t *testing.T) {
 	var (
-		w   *bytes.Buffer = &bytes.Buffer{}
+		w   = &bytes.Buffer{}
 		err error
 		res *http.Response
 	)
@@ -39,9 +39,9 @@ func TestRemix_Home(t *testing.T) {
 
 func TestRemix_Register(t *testing.T) {
 	var (
-		w                            *bytes.Buffer = &bytes.Buffer{}
-		registratinPath              string        = "/auth/register"
-		pass                         string        = "mamamia"
+		w                            = &bytes.Buffer{}
+		registratinPath              = "/auth/register"
+		pass                         = "mamamia"
 		err                          error
 		res1, res2, res3, res4, res5 *http.Response
 		vars                         url.Values
@@ -141,10 +141,10 @@ func TestRemix_Register(t *testing.T) {
 
 func TestRemix_Login(t *testing.T) {
 	var (
-		w                     *bytes.Buffer = &bytes.Buffer{}
-		email                 string        = "gernest@aurora.com"
-		loginPath             string        = "/auth/login"
-		pass                  string        = "mamamia"
+		w                     = &bytes.Buffer{}
+		email                 = "gernest@aurora.com"
+		loginPath             = "/auth/login"
+		pass                  = "mamamia"
 		err                   error
 		res, res1, res2, res3 *http.Response
 		vars                  url.Values
@@ -244,10 +244,10 @@ func TestRemix_Login(t *testing.T) {
 
 func TestRemix_Uploads(t *testing.T) {
 	var (
-		w                                 *bytes.Buffer = &bytes.Buffer{}
-		uploadPath                        string        = "/uploads"
-		loginPath                         string        = "/auth/login"
-		pass                              string        = "mamamia"
+		w                                 = &bytes.Buffer{}
+		uploadPath                        = "/uploads"
+		loginPath                         = "/auth/login"
+		pass                              = "mamamia"
 		contentType                       string
 		err                               error
 		res, res0, res1, res2, res3, res4 *http.Response
@@ -356,8 +356,8 @@ func TestRemix_Uploads(t *testing.T) {
 
 func TestRemixt_ServeImages(t *testing.T) {
 	var (
-		email      string = "gernest@aurora.com"
-		imagesPath string = "/imgs"
+		email      = "gernest@aurora.com"
+		imagesPath = "/imgs"
 		res        *http.Response
 		err        error
 		user       *User
@@ -406,14 +406,14 @@ func TestRemixt_ServeImages(t *testing.T) {
 
 func TestRemix_Logout(t *testing.T) {
 	var (
+		w          = &bytes.Buffer{}
+		loginPath  = "/auth/login"
+		logoutPath = "/auth/logout"
+		email      = "gernest@aurora.com"
+		pass       = "mamamia"
+		err        error
 		res, res1  *http.Response
 		vars       url.Values
-		loginPath  string = "/auth/login"
-		logoutPath string = "/auth/logout"
-		err        error
-		w          *bytes.Buffer = &bytes.Buffer{}
-		email      string        = "gernest@aurora.com"
-		pass       string        = "mamamia"
 	)
 
 	ts, client, _ := testServer(t)

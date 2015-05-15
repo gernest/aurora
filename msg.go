@@ -41,7 +41,7 @@ type infoMSG struct {
 	Body  string `json:"body"`
 }
 
-// Messenger this the messanger from the gods
+// Messenger the messanger from the gods
 type Messenger struct {
 	rx     *Remix
 	rm     *golem.RoomManager
@@ -100,19 +100,18 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 					msg.SetEvent(alertSendSuccess)
 					msg.SetData(data)
 					return msg
-				} else {
-					err := m.saveMsg(inboxBucket, data.RecipientID, data)
-					if err != nil {
-						data.Status = http.StatusInternalServerError
-						msg.SetEvent(alertSendFailed)
-						msg.SetData(data)
-						return msg
-					}
-					data.Status = http.StatusOK
-					msg.SetEvent(alertSendSuccess)
+				}
+				err = m.saveMsg(inboxBucket, data.RecipientID, data)
+				if err != nil {
+					data.Status = http.StatusInternalServerError
+					msg.SetEvent(alertSendFailed)
 					msg.SetData(data)
 					return msg
 				}
+				data.Status = http.StatusOK
+				msg.SetEvent(alertSendSuccess)
+				msg.SetData(data)
+				return msg
 			}
 		}
 	case receiveEvt:

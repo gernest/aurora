@@ -12,12 +12,12 @@ import (
 
 func TestGetFileUpload(t *testing.T) {
 	var (
-		jpegFile  string = "me.jpg"
-		fieldName string = "profile"
-		pngFile   string = "mint.png"
+		jpegFile  = "me.jpg"
+		fieldName = "profile"
+		pngFile   = "mint.png"
 		err       error
 		req, req1 *http.Request
-		f         *fileUpload
+		f         *FileUpload
 	)
 
 	req, err = requestWithFile(jpegFile)
@@ -51,10 +51,10 @@ func TestGetFileUpload(t *testing.T) {
 
 func TestGetMultipleFileUpload(t *testing.T) {
 	var (
-		fileName  string = "me.jpg"
+		fileName  = "me.jpg"
 		err       error
 		req, req1 *http.Request
-		files     []*fileUpload
+		files     []*FileUpload
 	)
 	req = requestMuliFile(fileName, t)
 	files, err = GetMultipleFileUpload(req, "photos")
@@ -105,14 +105,14 @@ func TestGetMultipleFileUpload(t *testing.T) {
 }
 func TestSaveUploadFile(t *testing.T) {
 	var (
-		pBucket   string = "profiles"
-		id        string = "db0668ac-7eba-40dd-56ee-0b1c0b9b415p"
-		uploadsDB string = "fixture/uploads.bdb"
+		pBucket   = "profiles"
+		id        = "db0668ac-7eba-40dd-56ee-0b1c0b9b415p"
+		uploadsDB = "fixture/uploads.bdb"
 		err       error
 		req, req1 *http.Request
-		f         *fileUpload
+		f         *FileUpload
 		p         *Profile
-		pic       *photo
+		pic       *Photo
 	)
 
 	// JPG
@@ -163,7 +163,7 @@ func TestSaveUploadFile(t *testing.T) {
 	}
 
 }
-func checkExtension(f *fileUpload, ext string, t *testing.T) {
+func checkExtension(f *FileUpload, ext string, t *testing.T) {
 	rext, err := getFileExt(*f.Body)
 	if err != nil {
 		t.Error(err)
@@ -175,9 +175,9 @@ func checkExtension(f *fileUpload, ext string, t *testing.T) {
 
 func requestWithFile(fileName string) (*http.Request, error) {
 	var (
-		buf    *bytes.Buffer     = &bytes.Buffer{}
-		w      *multipart.Writer = multipart.NewWriter(buf)
-		public string            = "public/img/"
+		buf    = &bytes.Buffer{}
+		w      = multipart.NewWriter(buf)
+		public = "public/img/"
 		f      []byte
 		err    error
 		req    *http.Request
@@ -200,9 +200,9 @@ func requestWithFile(fileName string) (*http.Request, error) {
 
 func requestMuliFile(fileName string, t *testing.T) *http.Request {
 	var (
-		kind        string = "multi"
-		testURL     string = "http://bogus.com"
-		cType       string = "Content-Type"
+		kind        = "multi"
+		testURL     = "http://bogus.com"
+		cType       = "Content-Type"
 		contentType string
 		err         error
 		content     *bytes.Buffer
@@ -219,12 +219,12 @@ func requestMuliFile(fileName string, t *testing.T) *http.Request {
 
 func requestMultiWithoutErr() (*http.Request, error) {
 	var (
-		buf       *bytes.Buffer     = &bytes.Buffer{}
-		w         *multipart.Writer = multipart.NewWriter(buf)
-		fileName  string            = "public/img/me.jpg"
-		testURL   string            = "http://bogus.com"
-		fieldName string            = "photos"
-		cType     string            = "Content-Type"
+		buf       = &bytes.Buffer{}
+		w         = multipart.NewWriter(buf)
+		fileName  = "public/img/me.jpg"
+		testURL   = "http://bogus.com"
+		fieldName = "photos"
+		cType     = "Content-Type"
 		f         []byte
 		err       error
 		req       *http.Request
@@ -267,13 +267,13 @@ func testListErr(t *testing.T) {
 
 func testUpData(fileName, kind string, t *testing.T) (*bytes.Buffer, string) {
 	var (
-		buf             *bytes.Buffer     = &bytes.Buffer{}
-		w               *multipart.Writer = multipart.NewWriter(buf)
-		public          string            = "public/img/"
-		kindMulti       string            = "multi"
-		kindSingle      string            = "single"
-		multiFieldName  string            = "photos"
-		singleFieldName string            = "profile"
+		buf             = &bytes.Buffer{}
+		w               = multipart.NewWriter(buf)
+		public          = "public/img/"
+		kindMulti       = "multi"
+		kindSingle      = "single"
+		multiFieldName  = "photos"
+		singleFieldName = "profile"
 		f               []byte
 		err             error
 	)

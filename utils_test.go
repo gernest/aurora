@@ -6,10 +6,10 @@ import (
 
 func TestFlash(t *testing.T) {
 	var (
-		flash   *Flash = NewFlash()
-		success string = "success"
-		notice  string = "note"
-		err     string = "error"
+		flash   = NewFlash()
+		success = "success"
+		notice  = "note"
+		err     = "error"
 	)
 	flash.Success(success)
 	flash.Notice(notice)

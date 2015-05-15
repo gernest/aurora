@@ -113,7 +113,7 @@ type EqualValidator struct {
 	Message string
 }
 
-// Validate  fields
+// Validate  checks if the given field is egual to the field in the to attribute
 func (vl EqualValidator) Validate(fi *gforms.FieldInstance, fo *gforms.FormInstance) error {
 	v := fi.V
 	if v.IsNil || v.Kind != reflect.String || v.Value == "" {
@@ -130,12 +130,14 @@ func (vl EqualValidator) Validate(fi *gforms.FieldInstance, fo *gforms.FormInsta
 	return nil
 }
 
+// BirthDateValidator validates the birth date, handy to keep minors offsite
 type BirthDateValidator struct {
 	Limit   int
 	Message string
 	gforms.Validator
 }
 
+// Validate checks if the given field instance esceeds the Limit attribute
 func (vl BirthDateValidator) Validate(fi *gforms.FieldInstance, fo *gforms.FormInstance) error {
 	v := fi.V
 	iv := v.Value.(time.Time)
@@ -172,6 +174,7 @@ func ComposeLoginForm() gforms.ModelForm {
 	))
 }
 
+// ComposeProfileForm builds a profile form for validation (using gform)
 func ComposeProfileForm() gforms.ModelForm {
 	return gforms.DefineModelForm(Profile{}, gforms.NewFields(
 		gforms.NewIntegerField(

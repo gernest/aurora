@@ -14,12 +14,14 @@ import (
 	"github.com/gernest/nutz"
 )
 
-type fileUpload struct {
+// FileUpload represents the uploaded file
+type FileUpload struct {
 	Body *multipart.File
 	Ext  string
 }
 
-type photo struct {
+// Photo is therepresentation of an uploaded image file
+type Photo struct {
 	ID         string    `json:"id"`
 	Type       string    `json:"type"`
 	Size       int       `json:"size"`
@@ -29,7 +31,9 @@ type photo struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
-func GetFileUpload(r *http.Request, fieldName string) (*fileUpload, error) {
+// GetFileUpload retrieves uploaded file from a request.
+// the fieldName parameter is the name of the field which holds the file data.
+func GetFileUpload(r *http.Request, fieldName string) (*FileUpload, error) {
 	file, _, err := r.FormFile(fieldName)
 	if err != nil {
 		return nil, err
@@ -51,7 +55,9 @@ func (l listErr) Error() string {
 	return rst
 }
 
-func GetMultipleFileUpload(r *http.Request, fieldName string) ([]*fileUpload, error) {
+// GetMultipleFileUpload retrieves multiple files uploaded on a single request.
+// The fieldName parameter is the form field containing the files
+func GetMultipleFileUpload(r *http.Request, fieldName string) ([]*FileUpload, error) {
 	const defaultMaxMemory = 32 << 20 //32MB
 
 	err := r.ParseMultipartForm(defaultMaxMemory)
@@ -59,7 +65,7 @@ func GetMultipleFileUpload(r *http.Request, fieldName string) ([]*fileUpload, er
 		return nil, err
 	}
 	if up := r.MultipartForm.File[fieldName]; len(up) > 0 {
-		var rst []*fileUpload
+		var rst []*FileUpload
 		var ferr listErr
 		for _, v := range up {
 			f, err := v.Open()
@@ -82,8 +88,16 @@ func GetMultipleFileUpload(r *http.Request, fieldName string) ([]*fileUpload, er
 	return nil, http.ErrMissingFile
 }
 
-func SaveUploadFile(db nutz.Storage, file *fileUpload, p *Profile) (*photo, error) {
-	pic := &photo{
+// SaveUploadFile persists the given file
+func SaveUploadFile(db nutz.Storage, file *FileUpload, p *Profile) (*Photo, error) {
+	var (
+		qPicID      = "iid"
+		qProfID     = "pid"
+		photoBucket = "photos"
+		metaBucket  = "meta"
+		dataBucket  = "data"
+	)
+	pic := &Photo{
 		ID:         getUUID(),
 		Type:       file.Ext,
 		UploadedBy: p.ID,
@@ -96,15 +110,15 @@ func SaveUploadFile(db nutz.Storage, file *fileUpload, p *Profile) (*photo, erro
 	}
 	pic.Size = len(data)
 	query := url.Values{
-		"iid": {pic.ID},
-		"pid": {p.ID},
+		qPicID:  {pic.ID},
+		qProfID: {p.ID},
 	}
 	pic.Query = query.Encode()
-	err = marshalAndCreate(db, pic, "photos", pic.ID, "meta")
+	err = marshalAndCreate(db, pic, photoBucket, pic.ID, metaBucket)
 	if err != nil {
 		return nil, err
 	}
-	s := db.Create("photos", pic.ID, data, "data")
+	s := db.Create(photoBucket, pic.ID, data, dataBucket)
 	if s.Error != nil {
 		return nil, s.Error
 	}
@@ -129,15 +143,15 @@ func getFileExt(file multipart.File) (string, error) {
 	}
 }
 
-func getUploadFile(file multipart.File) (*fileUpload, error) {
+func getUploadFile(file multipart.File) (*FileUpload, error) {
 	ext, err := getFileExt(file)
 	if err != nil {
 		return nil, err
 	}
-	return &fileUpload{&file, ext}, nil
+	return &FileUpload{&file, ext}, nil
 }
 
-func encodePhoto(file *fileUpload) ([]byte, error) {
+func encodePhoto(file *FileUpload) ([]byte, error) {
 	ext := file.Ext
 	switch ext {
 	case "jpg", "jpeg":

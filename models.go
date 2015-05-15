@@ -2,7 +2,7 @@ package aurora
 
 import "time"
 
-// Account is an interface for a user account managemen
+// Account is an interface for a user account
 type Account interface {
 	Email() string
 	Password() string
@@ -38,13 +38,13 @@ func NewUser() *User {
 // Profile contains additional information about the user
 type Profile struct {
 	ID        string    `json:"id" gforms:"-"`
-	Picture   *photo    `json:"picture" gforms:"-"`
+	Picture   *Photo    `json:"picture" gforms:"-"`
 	Age       int       `json:"age" gforms:"age"`
 	BirthDate time.Time `json:"birth_date" gforms:"birth_date"`
 	Height    int       `json:"height" gforms:"height"`
 	Weight    int       `json:"weight"`
 	Hobies    []string  `json:"hobies"`
-	Photos    []*photo  `json:"photos"`
+	Photos    []*Photo  `json:"photos"`
 	City      string    `json:"city"`
 	Country   string    `json:"country"`
 	Street    string    `json:"street"`

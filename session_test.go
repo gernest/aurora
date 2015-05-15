@@ -22,10 +22,10 @@ func TestSession_Save(t *testing.T) {
 
 func TestSess_Get(t *testing.T) {
 	var (
-		maxAge int    = 30
-		sPath  string = "/"
-		cName  string = "youngWarlock"
-		secret []byte = []byte("my-secret")
+		maxAge = 30
+		sPath  = "/"
+		cName  = "youngWarlock"
+		secret = []byte("my-secret")
 	)
 	opts := &sessions.Options{MaxAge: maxAge, Path: sPath}
 	store, req := sessSetup(t)
@@ -70,11 +70,11 @@ func TestClean_session(t *testing.T) {
 
 func sessSetup(t *testing.T) (*Session, *http.Request) {
 	var (
-		maxAge  int    = 30
-		sPath   string = "/"
-		sBucket string = "sessions"
-		secret  []byte = []byte("my-secret")
-		testURL string = "http://www.example.com"
+		maxAge  = 30
+		sPath   = "/"
+		sBucket = "sessions"
+		secret  = []byte("my-secret")
+		testURL = "http://www.example.com"
 	)
 	opts := &sessions.Options{MaxAge: maxAge, Path: sPath}
 	store := NewSessStore(testDb, sBucket, 10, opts, secret)
@@ -86,7 +86,7 @@ func sessSetup(t *testing.T) (*Session, *http.Request) {
 }
 
 func testNewSess(ss *Session, req *http.Request, t *testing.T) *sessions.Session {
-	var cName string = "youngWarlock"
+	var cName = "youngWarlock"
 
 	s, err := ss.New(req, cName)
 	if err == nil {
