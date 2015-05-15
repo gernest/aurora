@@ -105,24 +105,26 @@ func (rx *Remix) Home(w http.ResponseWriter, r *http.Request) {
 // Register creates a ew user accounts
 func (rx *Remix) Register(w http.ResponseWriter, r *http.Request) {
 	var (
-		ss   *sessions.Session
-		ok   bool
-		data render.TemplateData = render.NewTemplateData()
+		data         render.TemplateData = render.NewTemplateData()
+		loginPath    string              = "/auth/login"
+		registerPath string              = "auth/register"
+		ok           bool
+		ss           *sessions.Session
 	)
 	if ss, ok = rx.isInSession(r); ok {
-		http.Redirect(w, r, "/auth/login", http.StatusFound)
+		http.Redirect(w, r, loginPath, http.StatusFound)
 		return
 	}
 
 	if r.Method == "GET" {
-		rx.rendr.HTML(w, http.StatusOK, "auth/register", data)
+		rx.rendr.HTML(w, http.StatusOK, registerPath, data)
 		return
 	}
 	if r.Method == "POST" {
 		form := ComposeRegisterForm()(r)
 		if !form.IsValid() {
 			data.Add("errors", form.Errors())
-			rx.rendr.HTML(w, http.StatusOK, "auth/register", data)
+			rx.rendr.HTML(w, http.StatusOK, registerPath, data)
 			return
 		}
 		user := form.GetModel().(User)
@@ -165,10 +167,11 @@ func (rx *Remix) Register(w http.ResponseWriter, r *http.Request) {
 // Login creates new session for a user
 func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
 	var (
-		ss    *sessions.Session
-		ok    bool
-		data  render.TemplateData = render.NewTemplateData()
-		flash *Flash              = NewFlash()
+		data      render.TemplateData = render.NewTemplateData()
+		flash     *Flash              = NewFlash()
+		loginPath string              = "auth/login"
+		ok        bool
+		ss        *sessions.Session
 	)
 
 	if ss, ok = rx.isInSession(r); ok {
@@ -180,14 +183,14 @@ func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
 		if fd != nil {
 			data.Add("flash", fd.Data)
 		}
-		rx.rendr.HTML(w, http.StatusOK, "auth/login", data)
+		rx.rendr.HTML(w, http.StatusOK, loginPath, data)
 		return
 	}
 	if r.Method == "POST" {
 		form := ComposeLoginForm()(r)
 		if !form.IsValid() {
 			data.Add("errors", form.Errors())
-			rx.rendr.HTML(w, http.StatusOK, "auth/login", data)
+			rx.rendr.HTML(w, http.StatusOK, loginPath, data)
 			return
 		}
 
@@ -195,12 +198,12 @@ func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
 		user, err := GetUser(setDB(rx.db, rx.cfg.AccountsDB), rx.cfg.AccountsBucket, lform.Email)
 		if err != nil {
 			data.Add("error", "email au namba ya siri sio sahihi, tafadhali jaribu tena")
-			rx.rendr.HTML(w, http.StatusOK, "auth/login", data)
+			rx.rendr.HTML(w, http.StatusOK, loginPath, data)
 			return
 		}
 		if err = verifyPass(user.Pass, lform.Password); err != nil {
 			data.Add("error", "email au namba ya siri sio sahihi, tafadhali jaribu tena")
-			rx.rendr.HTML(w, http.StatusOK, "auth/login", data)
+			rx.rendr.HTML(w, http.StatusOK, loginPath, data)
 			return
 		}
 		ss, err = rx.sess.New(r, rx.cfg.SessionName)
@@ -223,9 +226,9 @@ func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
 func (rx *Remix) ServeImages(w http.ResponseWriter, r *http.Request) {
 	var (
 		vars        url.Values = r.URL.Query()
+		pic         *photo     = &photo{}
 		imageID     string     = vars.Get("iid")
 		profileID   string     = vars.Get("pid")
-		pic         *photo     = &photo{}
 		photoBucket string     = "photos"
 		metaBucket  string     = "meta"
 		dataBucket  string     = "data"
@@ -251,13 +254,13 @@ func (rx *Remix) ServeImages(w http.ResponseWriter, r *http.Request) {
 // Uploads uploads files to the uploader's database
 func (rx *Remix) Uploads(w http.ResponseWriter, r *http.Request) {
 	var (
-		ss   *sessions.Session
 		ok   bool
+		ss   *sessions.Session
 		rst  []*photo
 		errs listErr
 	)
 	if ss, ok = rx.isInSession(r); !ok {
-		jr := &jsonUploads{Error: "not authorized"}
+		jr := &jsonUploads{Error: errForbidden.Error()}
 		rx.rendr.JSON(w, http.StatusForbidden, jr)
 		return
 	}
@@ -344,15 +347,17 @@ func (rx *Remix) Logout(w http.ResponseWriter, r *http.Request) {
 // Profile viewing and updating profile
 func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 	var (
-		vars   url.Values          = r.URL.Query()
-		data   render.TemplateData = rx.setSessionData(r)
-		id     string              = vars.Get("id")
-		view   string              = vars.Get("view")
-		all    string              = vars.Get("all")
-		update string              = vars.Get("u")
-		flash  *Flash
-		ss     *sessions.Session
-		ok     bool
+		vars        url.Values          = r.URL.Query()
+		data        render.TemplateData = rx.setSessionData(r)
+		id          string              = vars.Get("id")
+		view        string              = vars.Get("view")
+		all         string              = vars.Get("all")
+		update      string              = vars.Get("u")
+		profileHome string              = "profile/home"
+		loginPath   string              = "/auth/login"
+		ok          bool
+		flash       *Flash
+		ss          *sessions.Session
 	)
 
 	if r.Method == "GET" {
@@ -374,7 +379,7 @@ func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			data.Add("profile", p)
-			rx.rendr.HTML(w, http.StatusOK, "profile/home", data)
+			rx.rendr.HTML(w, http.StatusOK, profileHome, data)
 			return
 		}
 		if all == "true" && view == "true" {
@@ -397,7 +402,7 @@ func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			data.Add("profiles", p)
-			rx.rendr.HTML(w, http.StatusOK, "profile/home", data)
+			rx.rendr.HTML(w, http.StatusOK, profileHome, data)
 			return
 		}
 	}
@@ -434,7 +439,8 @@ func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 			flash = NewFlash()
 			flash.Error("unatakiwa uingie kwanza kabla ya kupata ruhusa ya kutumia hii kurasa")
 			flash.Save(ss)
-			http.Redirect(w, r, "/auth/login", http.StatusFound)
+			ss.Save(r, w)
+			http.Redirect(w, r, loginPath, http.StatusFound)
 			return
 		}
 	}
@@ -464,14 +470,23 @@ func (rx *Remix) getAllProfiles() ([]*Profile, error) {
 
 // Routes returs a mux of all registered routes
 func (rx *Remix) Routes() *mux.Router {
+	var (
+		homePath     string = "/"
+		registerPath string = "/auth/register"
+		loginPath    string = "/auth/login"
+		logoutPath   string = "/auth/logout"
+		imagesPath   string = "/imgs"
+		uploadsPath  string = "/uploads"
+		profilePath  string = "/profile"
+	)
 	h := mux.NewRouter()
-	h.HandleFunc("/", rx.Home)
-	h.HandleFunc("/auth/register", rx.Register).Methods("GET", "POST")
-	h.HandleFunc("/auth/login", rx.Login).Methods("GET", "POST")
-	h.HandleFunc("/auth/logout", rx.Logout)
-	h.HandleFunc("/imgs", rx.ServeImages).Methods("GET")
-	h.HandleFunc("/uploads", rx.Uploads)
-	h.HandleFunc("/profile", rx.Profile)
+	h.HandleFunc(homePath, rx.Home)
+	h.HandleFunc(registerPath, rx.Register).Methods("GET", "POST")
+	h.HandleFunc(loginPath, rx.Login).Methods("GET", "POST")
+	h.HandleFunc(logoutPath, rx.Logout)
+	h.HandleFunc(imagesPath, rx.ServeImages).Methods("GET")
+	h.HandleFunc(uploadsPath, rx.Uploads)
+	h.HandleFunc(profilePath, rx.Profile)
 	return h
 }
 

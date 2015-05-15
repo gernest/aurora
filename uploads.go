@@ -14,8 +14,6 @@ import (
 	"github.com/gernest/nutz"
 )
 
-const defaultMaxMemory = 32 << 20 //32MB
-
 type fileUpload struct {
 	Body *multipart.File
 	Ext  string
@@ -54,6 +52,8 @@ func (l listErr) Error() string {
 }
 
 func GetMultipleFileUpload(r *http.Request, fieldName string) ([]*fileUpload, error) {
+	const defaultMaxMemory = 32 << 20 //32MB
+
 	err := r.ParseMultipartForm(defaultMaxMemory)
 	if err != nil {
 		return nil, err

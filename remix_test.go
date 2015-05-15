@@ -16,9 +16,9 @@ import (
 
 func TestRemix_Home(t *testing.T) {
 	var (
-		res *http.Response
-		err error
 		w   *bytes.Buffer = &bytes.Buffer{}
+		err error
+		res *http.Response
 	)
 	ts, client, _ := testServer(t)
 	defer ts.Close()
@@ -39,12 +39,12 @@ func TestRemix_Home(t *testing.T) {
 
 func TestRemix_Register(t *testing.T) {
 	var (
-		res1, res2, res3, res4, res5 *http.Response
-		err                          error
-		vars                         url.Values
 		w                            *bytes.Buffer = &bytes.Buffer{}
 		registratinPath              string        = "/auth/register"
 		pass                         string        = "mamamia"
+		err                          error
+		res1, res2, res3, res4, res5 *http.Response
+		vars                         url.Values
 	)
 
 	ts, client, rx := testServer(t)
@@ -141,13 +141,13 @@ func TestRemix_Register(t *testing.T) {
 
 func TestRemix_Login(t *testing.T) {
 	var (
-		res, res1, res2, res3 *http.Response
-		err                   error
-		vars                  url.Values
 		w                     *bytes.Buffer = &bytes.Buffer{}
 		email                 string        = "gernest@aurora.com"
 		loginPath             string        = "/auth/login"
 		pass                  string        = "mamamia"
+		err                   error
+		res, res1, res2, res3 *http.Response
+		vars                  url.Values
 	)
 
 	ts, client, _ := testServer(t)
@@ -244,15 +244,15 @@ func TestRemix_Login(t *testing.T) {
 
 func TestRemix_Uploads(t *testing.T) {
 	var (
-		res, res1, res2, res3, res4 *http.Response
-		uploadPath                  string = "/uploads"
-		loginPath                   string = "/auth/login"
-		vars                        url.Values
-		err                         error
-		content                     *bytes.Buffer
-		contentType                 string
-		w                           *bytes.Buffer = &bytes.Buffer{}
-		pass                        string        = "mamamia"
+		w                                 *bytes.Buffer = &bytes.Buffer{}
+		uploadPath                        string        = "/uploads"
+		loginPath                         string        = "/auth/login"
+		pass                              string        = "mamamia"
+		contentType                       string
+		err                               error
+		res, res0, res1, res2, res3, res4 *http.Response
+		vars                              url.Values
+		content                           *bytes.Buffer
 	)
 	ts, client, rx := testServer(t)
 	defer ts.Close()
@@ -263,6 +263,20 @@ func TestRemix_Uploads(t *testing.T) {
 	loginURL := fmt.Sprintf("%s%s", ts.URL, loginPath)
 	upURL := fmt.Sprintf("%s%s", ts.URL, uploadPath)
 
+	content, contentType = testUpData("me.jpg", "single", t)
+	res0, err = client.Post(upURL, contentType, content)
+	defer res0.Body.Close()
+	if err != nil {
+		t.Error(err)
+	}
+	if res0.StatusCode != http.StatusForbidden {
+		t.Errorf("Ecpected %d got %d", http.StatusForbidden, res0.StatusCode)
+	}
+	io.Copy(w, res0.Body)
+	if !contains(w.String(), errForbidden.Error()) {
+		t.Errorf("Expected to be forbidden got %s", w.String())
+	}
+
 	res, err = client.PostForm(loginURL, vars)
 	defer res.Body.Close()
 	if err != nil {
@@ -271,9 +285,8 @@ func TestRemix_Uploads(t *testing.T) {
 	if res.StatusCode != http.StatusOK {
 		t.Errorf("Ecpected %d got %d", http.StatusOK, res.StatusCode)
 	}
-
-	content, contentTyoe := testUpData("me.jpg", "single", t)
-	res1, err = client.Post(upURL, contentTyoe, content)
+	content, contentType = testUpData("me.jpg", "single", t)
+	res1, err = client.Post(upURL, contentType, content)
 	defer res1.Body.Close()
 	if err != nil {
 		t.Error(err)
@@ -376,6 +389,19 @@ func TestRemixt_ServeImages(t *testing.T) {
 		t.Errorf("Expected %d got %d", http.StatusOK, res.StatusCode)
 	}
 
+	// failure case
+	vars := url.Values{
+		"iid": {"bogus"},
+		"pid": {p.Picture.UploadedBy},
+	}
+	res1, err := client.Get(fmt.Sprintf("%s%s?%s", ts.URL, imagesPath, vars.Encode()))
+	defer res1.Body.Close()
+	if err != nil {
+		t.Error(err)
+	}
+	if res1.StatusCode != http.StatusNotFound {
+		t.Errorf("Expected %d got %d", http.StatusNotFound, res1.StatusCode)
+	}
 }
 
 func TestRemix_Logout(t *testing.T) {
@@ -565,6 +591,38 @@ func TestRemix_Profile(t *testing.T) {
 	if !contains(w.Body.String(), pids[0]) {
 		t.Errorf("Expected %s to contain %s", w.Body.String(), pids[0])
 	}
+
+	// failure case
+	bAcc := rx.cfg.AccountsBucket
+	rx.cfg.AccountsBucket = ""
+	req3, err := http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars.Encode()), nil)
+	if err != nil {
+		t.Error(err)
+	}
+	req3.Header.Set("X-Requested-With", "XMLHttpRequest")
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, req3)
+	if w.Code != http.StatusNotFound {
+		t.Errorf("Expected %d got %d", http.StatusNotFound, w.Code)
+	}
+	if !contains(w.Body.String(), errNotFound.Error()) {
+		t.Errorf("Expected %s to contain %s", w.Body.String(), errNotFound.Error())
+	}
+
+	req4, err := http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars.Encode()), nil)
+	if err != nil {
+		t.Error(err)
+	}
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, req4)
+	if w.Code != http.StatusNotFound {
+		t.Errorf("Expected %d got %d", http.StatusNotFound, w.Code)
+	}
+	if !contains(w.Body.String(), "shit not found") {
+		t.Errorf("Expected 404 page got %s", w.Body.String())
+	}
+
+	rx.cfg.AccountsBucket = bAcc
 }
 
 // This cleans up all the remix based test databases
