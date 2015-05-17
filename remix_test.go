@@ -458,6 +458,7 @@ func TestRemix_Profile(t *testing.T) {
 		profilePath = "/profile"
 		loginPath   = "/auth/login"
 		pass        = "mamamia"
+		birthDate   = "14 Apr 97 13:33 EAT"
 	)
 
 	emails := []string{
@@ -644,6 +645,7 @@ func TestRemix_Profile(t *testing.T) {
 		"id": {pids[0]},
 	}
 
+	// case posting a valid form but the user is not logged in, the request is a standard http one.
 	res, err := client.PostForm(fmt.Sprintf("%s%s?%s", ts.URL, profilePath, vars.Encode()), profileForm)
 	defer res.Body.Close()
 	if err != nil {
@@ -658,6 +660,7 @@ func TestRemix_Profile(t *testing.T) {
 		t.Errorf("Expected to redirect to login path got %s", buf.String())
 	}
 
+	// case posting a valid form but the user is not logged in, the request is ajax.
 	req5, err := http.NewRequest("POST", fmt.Sprintf("/profile?%s", vars.Encode()), strings.NewReader(profileForm.Encode()))
 	if err != nil {
 		t.Error(err)
@@ -672,7 +675,7 @@ func TestRemix_Profile(t *testing.T) {
 		t.Errorf("Expected %s to contain %s", w.Body.String(), errForbidden.Error())
 	}
 
-	// login
+	// login and create a session for user with pids[0]
 	varsLogin := url.Values{
 		"email":    {emails[0]},
 		"password": {pass},
@@ -688,13 +691,22 @@ func TestRemix_Profile(t *testing.T) {
 	buf.Reset()
 	io.Copy(buf, res1.Body)
 	if !contains(buf.String(), "search") {
-		t.Errorf("Expected not to be in session got %s", buf.String())
+		t.Errorf("Expected to be in session got %s", buf.String())
 	}
 	vars = url.Values{
 		"u":  {"true"},
 		"id": {pids[1]},
 	}
+	varsTrue := url.Values{
+		"u":  {"true"},
+		"id": {pids[0]},
+	}
 
+	// The profile url which has the id query match logged in user id
+	loggedUsrUrl := fmt.Sprintf("%s%s?%s", ts.URL, profilePath, varsTrue.Encode())
+
+	// case posting a valid form but the user is  logged in, the request is a standard http one.
+	// The loggedIn user ID is defferent prom the id provided by the url.
 	res2, err := client.PostForm(fmt.Sprintf("%s%s?%s", ts.URL, profilePath, vars.Encode()), profileForm)
 	defer res.Body.Close()
 	if err != nil {
@@ -709,6 +721,47 @@ func TestRemix_Profile(t *testing.T) {
 		t.Errorf("Expected to render 403 template got %s", buf.String())
 	}
 
+	// case posting an  invalid form but the user is logged in, the request is a standard http one.
+	profileForm2 := url.Values{
+		"city":       {"mwanza"},
+		"country":    {"Tanzania"},
+		"age":        {"12"},
+		"birth_date": {birthDate},
+	}
+	res3, err := client.PostForm(loggedUsrUrl, profileForm2)
+	defer res3.Body.Close()
+	if err != nil {
+		t.Error(err)
+	}
+	if res3.StatusCode != http.StatusOK {
+		t.Errorf("Expected %d got %d", http.StatusOK, res3.StatusCode)
+	}
+	buf.Reset()
+	io.Copy(buf, res3.Body)
+	if !contains(buf.String(), "profile-home") {
+		t.Errorf("Expected to have rendered profile/home got %s", buf.String())
+	}
+
+	// case posting a valid form, the user is logged in and the request is standard http
+	profileForm3 := url.Values{
+		"city":       {"mwanza"},
+		"country":    {"Tanzania"},
+		"age":        {"19"},
+		"birth_date": {birthDate},
+	}
+	res4, err := client.PostForm(loggedUsrUrl, profileForm3)
+	defer res4.Body.Close()
+	if err != nil {
+		t.Error(err)
+	}
+	if res4.StatusCode != http.StatusOK {
+		t.Errorf("Expected %d got %d", http.StatusOK, res4.StatusCode)
+	}
+	buf.Reset()
+	io.Copy(buf, res4.Body)
+	if !contains(buf.String(), "profile-home") {
+		t.Errorf("Expected to have rendered profile/home got %s", buf.String())
+	}
 }
 
 // This cleans up all the remix based test databases

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -17,6 +19,7 @@ var (
 	errNotFound       = errors.New("samahani kitu ulichoulizia hatujakipata")
 	errInternalServer = errors.New("du! naona imezingua, jaribu tena badae")
 	errForbidden      = errors.New("du! hauna ruhususa ya kufika kwenye hii kurasa")
+	errBadForm        = errors.New("du! inaonekana fomu haujaijaza vizuri, tafadhali rudia tena")
 )
 
 // Remix all the fun is here
@@ -133,6 +136,7 @@ func (rx *Remix) Register(w http.ResponseWriter, r *http.Request) {
 			rx.rendr.HTML(w, http.StatusInternalServerError, "500", data)
 			return
 		}
+
 		user.Pass = hash
 		user.UUID = getUUID()
 		err = CreateAccount(setDB(rx.db, rx.cfg.AccountsDB), &user, rx.cfg.AccountsBucket)
@@ -360,8 +364,8 @@ func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 		ss          *sessions.Session
 	)
 
+	pdb := getProfileDatabase(rx.cfg.DBDir, id, rx.cfg.DBExtension)
 	if r.Method == "GET" {
-		pdb := getProfileDatabase(rx.cfg.DBDir, id, rx.cfg.DBExtension)
 		if id != "" && view == "true" && all != "true" {
 			if rx.isAjax(r) {
 				p, err := GetProfile(setDB(rx.db, pdb), rx.cfg.ProfilesBucket, id)
@@ -408,8 +412,8 @@ func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.Method == "POST" {
 		if update == "true" {
-			//form := ComposeProfileForm()(r)
 			if ss, ok = rx.isInSession(r); ok {
+				form := ComposeProfileForm()(r)
 				_, p, err := rx.getCurrentUserAndProfile(ss)
 				if err != nil {
 					if rx.isAjax(r) {
@@ -430,7 +434,45 @@ func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 					rx.rendr.HTML(w, http.StatusInternalServerError, "403", data)
 					return
 				}
-
+				if !form.IsValid() {
+					if rx.isAjax(r) {
+						rx.rendr.JSON(w, http.StatusOK, &jsonErr{errBadForm.Error()})
+						return
+					}
+					data.Add("error", errBadForm.Error())
+					data.Add("profile", p)
+					rx.rendr.HTML(w, http.StatusOK, profileHome, data)
+					return
+				}
+				prof := form.GetModel().(Profile)
+				p.BirthDate = prof.BirthDate
+				p.Age = setAge(prof.BirthDate)
+				p.City = prof.City
+				p.Country = prof.Country
+				p.Street = prof.Street
+				p.UpdatedAt = time.Now()
+				err = UpdateProfile(setDB(rx.db, pdb), p, rx.cfg.ProfilesBucket)
+				if err != nil {
+					if rx.isAjax(r) {
+						rx.rendr.JSON(w, http.StatusInternalServerError, &jsonErr{errInternalServer.Error()})
+						return
+					}
+					data.Add("error", errInternalServer.Error())
+					rx.rendr.HTML(w, http.StatusInternalServerError, "500", data)
+					return
+				}
+				if rx.isAjax(r) {
+					rx.rendr.JSON(w, http.StatusOK, p)
+					return
+				}
+				tmpVars := url.Values{
+					"id":   {p.ID},
+					"view": {"true"},
+					"all":  {"false"},
+				}
+				tmpUrl := fmt.Sprintf("/profile?%s", tmpVars.Encode())
+				http.Redirect(w, r, tmpUrl, http.StatusFound)
+				return
 			}
 			if rx.isAjax(r) {
 				rx.rendr.JSON(w, http.StatusForbidden, &jsonErr{errForbidden.Error()})

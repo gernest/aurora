@@ -140,6 +140,9 @@ type BirthDateValidator struct {
 // Validate checks if the given field instance esceeds the Limit attribute
 func (vl BirthDateValidator) Validate(fi *gforms.FieldInstance, fo *gforms.FormInstance) error {
 	v := fi.V
+	if v.IsNil {
+		return nil
+	}
 	iv := v.Value.(time.Time)
 	now := time.Now()
 	if now.Year()-iv.Year() < vl.Limit {

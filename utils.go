@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"path/filepath"
+	"time"
 
 	"github.com/nu7hatch/gouuid"
 	"golang.org/x/crypto/bcrypt"
@@ -127,4 +128,9 @@ func getUUID() string {
 
 func getProfileDatabase(dbDir, profileID, dbExt string) string {
 	return filepath.Join(dbDir, profileID+dbExt)
+}
+
+func setAge(born time.Time) int {
+	n := time.Now()
+	return n.Year() - born.Year()
 }
