@@ -137,15 +137,15 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 				err := m.deletMsg(inboxBucket, p.ID, data)
 				if err != nil {
 					data.Status = http.StatusInternalServerError
-					return return setMSG("",data,msg)
+					return setMSG("", data, msg)
 				}
 				err = m.saveMsg(draftBucket, p.ID, data)
 				if err != nil {
 					data.Status = http.StatusInternalServerError
 					msg.SetData(data)
-					return setMSG("",data,msg)
+					return setMSG("", data, msg)
 				}
-				return setMSG(alertSendFailed,nil,msg)
+				return setMSG(alertSendFailed, nil, msg)
 			}
 
 		}
