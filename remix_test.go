@@ -455,10 +455,13 @@ func TestRemix_Logout(t *testing.T) {
 
 func TestRemix_Profile(t *testing.T) {
 	var (
-		profilePath = "/profile"
-		loginPath   = "/auth/login"
-		pass        = "mamamia"
-		birthDate   = "14 Apr 97 13:33 EAT"
+		profilePath                  = "/profile"
+		loginPath                    = "/auth/login"
+		pass                         = "mamamia"
+		birthDate                    = "14 Apr 97 13:33 EAT"
+		err                          error
+		req, req1, req2, req3        *http.Request
+		req4, req5, req6, req7, req8 *http.Request
 	)
 
 	emails := []string{
@@ -469,7 +472,10 @@ func TestRemix_Profile(t *testing.T) {
 
 	ts, client, rx := testServer(t)
 	defer ts.Close()
-	// create accounts
+
+	// create user accounts and profiles, using the id's in pids global variables
+	// and emails in the emsils slice. The id, email pairs correspond to the two
+	// slice's index
 	for k, v := range pids {
 		usr := &User{EmailAddress: emails[k], UUID: v}
 		ps, err := hashPassword(pass)
@@ -491,21 +497,35 @@ func TestRemix_Profile(t *testing.T) {
 
 	}
 
+	// Get the routes, this is so as to test the parts that don't require the user
+	// to be loggen in, so using the client will be overkill.
+	h := rx.Routes()
+
+	/*
+		=================================================================
+		GET  requests
+		=================================================================
+	*/
 	for _, v := range pids {
+
+		// A correct profile url query, this is for viewing a single profile only
 		vars := url.Values{
 			"id":   {v},
 			"view": {"true"},
 			"all":  {"false"},
 		}
+
+		// A wrong profile url query, notice that the id field is not a correct
+		// uuid string and also there aint no such profiles in the database.
+		// This also is for viewing a single profile
 		vars2 := url.Values{
 			"id":   {v + "shit"},
 			"view": {"true"},
 			"all":  {"false"},
 		}
-		h := rx.Routes()
 
-		// HTML
-		req, err := http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars.Encode()), nil)
+		// case a valid profile query, and the request is standard http.
+		req, err = http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars.Encode()), nil)
 		if err != nil {
 			t.Error(err)
 		}
@@ -520,8 +540,9 @@ func TestRemix_Profile(t *testing.T) {
 		//	t.Errorf("Expected %s to contain %s", w.Body.String(), v)
 		//}
 
-		// mess with ID
-		req1, err := http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars2.Encode()), nil)
+		// case wrong profile url query, to be precise, the id is wrong that is it is not
+		// a valid uuid and no any profile matches. The request is standard http.
+		req1, err = http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars2.Encode()), nil)
 		if err != nil {
 			t.Error(err)
 		}
@@ -534,8 +555,8 @@ func TestRemix_Profile(t *testing.T) {
 			t.Error("Expected a 404 custom template to be rendered")
 		}
 
-		// JSON
-		req2, err := http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars.Encode()), nil)
+		// case a valid profile query, and the request is standard ajax.
+		req2, err = http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars.Encode()), nil)
 		if err != nil {
 			t.Error(err)
 		}
@@ -549,8 +570,9 @@ func TestRemix_Profile(t *testing.T) {
 			t.Errorf("Expected %s to contain %s", w.Body.String(), v)
 		}
 
-		// no such id
-		req3, err := http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars2.Encode()), nil)
+		// case wrong profile url query, to be precise, the id is wrong that is it is not
+		// a valid uuid and no any profile matches. The request is standard  ajax.
+		req3, err = http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars2.Encode()), nil)
 		if err != nil {
 			t.Error(err)
 		}
@@ -565,21 +587,19 @@ func TestRemix_Profile(t *testing.T) {
 		}
 	}
 
-	// All profiles
+	// A correct profile url query for viewing all profiles
 	vars := url.Values{
 		"view": {"true"},
 		"all":  {"true"},
 	}
 
-	h := rx.Routes()
-
-	// HTML
-	req, err := http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars.Encode()), nil)
+	// case viewing all profiles via standard http
+	req4, err = http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars.Encode()), nil)
 	if err != nil {
 		t.Error(err)
 	}
 	w := httptest.NewRecorder()
-	h.ServeHTTP(w, req)
+	h.ServeHTTP(w, req4)
 	if w.Code != http.StatusOK {
 		t.Errorf("Expected %d got %d", http.StatusOK, w.Code)
 	}
@@ -589,14 +609,14 @@ func TestRemix_Profile(t *testing.T) {
 	//	t.Errorf("Expected %s to contain %s", w.Body.String(), v)
 	//}
 
-	// JSON
-	req2, err := http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars.Encode()), nil)
+	// case viewing all profiles via ajax
+	req5, err = http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars.Encode()), nil)
 	if err != nil {
 		t.Error(err)
 	}
-	req2.Header.Set("X-Requested-With", "XMLHttpRequest")
+	req5.Header.Set("X-Requested-With", "XMLHttpRequest")
 	w = httptest.NewRecorder()
-	h.ServeHTTP(w, req2)
+	h.ServeHTTP(w, req5)
 	if w.Code != http.StatusOK {
 		t.Errorf("Expected %d got %d", http.StatusOK, w.Code)
 	}
@@ -604,16 +624,22 @@ func TestRemix_Profile(t *testing.T) {
 		t.Errorf("Expected %s to contain %s", w.Body.String(), pids[0])
 	}
 
-	// failure case
+	// Inorder to test what if the hadler woks fine when an internal server error
+	// pccur. We set the accounts bucket to "", note that this hsould be restored
+	// after this test finish inorder for other tests to work properly.
+	//
+	// All handlers reiles on the rx.cfg object heavily.
 	bAcc := rx.cfg.AccountsBucket
 	rx.cfg.AccountsBucket = ""
-	req3, err := http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars.Encode()), nil)
+	req6, err = http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars.Encode()), nil)
 	if err != nil {
 		t.Error(err)
 	}
-	req3.Header.Set("X-Requested-With", "XMLHttpRequest")
+
+	// case a standard ajax rewuest.
+	req6.Header.Set("X-Requested-With", "XMLHttpRequest")
 	w = httptest.NewRecorder()
-	h.ServeHTTP(w, req3)
+	h.ServeHTTP(w, req6)
 	if w.Code != http.StatusNotFound {
 		t.Errorf("Expected %d got %d", http.StatusNotFound, w.Code)
 	}
@@ -621,21 +647,29 @@ func TestRemix_Profile(t *testing.T) {
 		t.Errorf("Expected %s to contain %s", w.Body.String(), errNotFound.Error())
 	}
 
-	req4, err := http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars.Encode()), nil)
+	// case a standard http request
+	req7, err = http.NewRequest("GET", fmt.Sprintf("/profile?%s", vars.Encode()), nil)
 	if err != nil {
 		t.Error(err)
 	}
 	w = httptest.NewRecorder()
-	h.ServeHTTP(w, req4)
+	h.ServeHTTP(w, req7)
 	if w.Code != http.StatusNotFound {
 		t.Errorf("Expected %d got %d", http.StatusNotFound, w.Code)
 	}
 	if !contains(w.Body.String(), "shit not found") {
 		t.Errorf("Expected 404 page got %s", w.Body.String())
 	}
+
+	// Restore the accounts bucket config value
 	rx.cfg.AccountsBucket = bAcc
 
-	// POST
+	/*
+		===============================================================
+		POST requests
+		===============================================================
+	*/
+
 	profileForm := url.Values{
 		"city":    {"mwanza"},
 		"country": {"Tanzania"},
@@ -661,13 +695,13 @@ func TestRemix_Profile(t *testing.T) {
 	}
 
 	// case posting a valid form but the user is not logged in, the request is ajax.
-	req5, err := http.NewRequest("POST", fmt.Sprintf("/profile?%s", vars.Encode()), strings.NewReader(profileForm.Encode()))
+	req8, err = http.NewRequest("POST", fmt.Sprintf("/profile?%s", vars.Encode()), strings.NewReader(profileForm.Encode()))
 	if err != nil {
 		t.Error(err)
 	}
-	req5.Header.Set("X-Requested-With", "XMLHttpRequest")
+	req8.Header.Set("X-Requested-With", "XMLHttpRequest")
 	w = httptest.NewRecorder()
-	h.ServeHTTP(w, req5)
+	h.ServeHTTP(w, req8)
 	if w.Code != http.StatusForbidden {
 		t.Errorf("Expected %d got %d", http.StatusForbidden, w.Code)
 	}
@@ -702,11 +736,11 @@ func TestRemix_Profile(t *testing.T) {
 		"id": {pids[0]},
 	}
 
-	// The profile url which has the id query match logged in user id
-	loggedUsrUrl := fmt.Sprintf("%s%s?%s", ts.URL, profilePath, varsTrue.Encode())
+	// The profile url which has the id query match logged user id
+	loggedUsrURL := fmt.Sprintf("%s%s?%s", ts.URL, profilePath, varsTrue.Encode())
 
-	// case posting a valid form but the user is  logged in, the request is a standard http one.
-	// The loggedIn user ID is defferent prom the id provided by the url.
+	// case posting a valid form and the user is  logged in, the request is a standard http one.
+	// The loggedIn user ID is defferent from the id provided by the url.
 	res2, err := client.PostForm(fmt.Sprintf("%s%s?%s", ts.URL, profilePath, vars.Encode()), profileForm)
 	defer res.Body.Close()
 	if err != nil {
@@ -728,7 +762,7 @@ func TestRemix_Profile(t *testing.T) {
 		"age":        {"12"},
 		"birth_date": {birthDate},
 	}
-	res3, err := client.PostForm(loggedUsrUrl, profileForm2)
+	res3, err := client.PostForm(loggedUsrURL, profileForm2)
 	defer res3.Body.Close()
 	if err != nil {
 		t.Error(err)
@@ -749,7 +783,7 @@ func TestRemix_Profile(t *testing.T) {
 		"age":        {"19"},
 		"birth_date": {birthDate},
 	}
-	res4, err := client.PostForm(loggedUsrUrl, profileForm3)
+	res4, err := client.PostForm(loggedUsrURL, profileForm3)
 	defer res4.Body.Close()
 	if err != nil {
 		t.Error(err)

@@ -470,8 +470,8 @@ func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 					"view": {"true"},
 					"all":  {"false"},
 				}
-				tmpUrl := fmt.Sprintf("/profile?%s", tmpVars.Encode())
-				http.Redirect(w, r, tmpUrl, http.StatusFound)
+				tmpURL := fmt.Sprintf("/profile?%s", tmpVars.Encode())
+				http.Redirect(w, r, tmpURL, http.StatusFound)
 				return
 			}
 			if rx.isAjax(r) {

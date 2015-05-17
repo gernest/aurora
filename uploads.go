@@ -12,6 +12,11 @@ import (
 	"time"
 
 	"github.com/gernest/nutz"
+	"github.com/koyachi/go-nude"
+)
+
+var (
+	errIsNude = errors.New("samahani picha za utupu haziruhusiwi")
 )
 
 // FileUpload represents the uploaded file
@@ -159,6 +164,13 @@ func encodePhoto(file *FileUpload) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+		ok, err := nude.IsImageNude(img)
+		if err != nil {
+			// log this error
+		}
+		if ok {
+			return nil, errIsNude
+		}
 
 		// this is supposed to increase the quality of the image. But I'm not sure
 		// yet if it is necessary or we should just put nil, which will result into
@@ -173,6 +185,14 @@ func encodePhoto(file *FileUpload) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+		ok, err := nude.IsImageNude(img)
+		if err != nil {
+			// log this error
+		}
+		if ok {
+			return nil, errIsNude
+		}
+
 		buf := new(bytes.Buffer)
 		png.Encode(buf, img)
 		return buf.Bytes(), nil
