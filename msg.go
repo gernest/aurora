@@ -90,28 +90,20 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 				err := m.saveMsg(ouboxBucket, p.ID, data)
 				if err != nil {
 					data.Status = http.StatusInternalServerError
-					msg.SetEvent(alertSendFailed)
-					msg.SetData(data)
-					return msg
+					return setMSG(alertSendFailed, data, msg)
 				}
 				if m.isOnline(data.RecipientID) {
 					m.rm.Emit(data.RecipientID, receiveEvt, data)
 					data.Status = http.StatusOK
-					msg.SetEvent(alertSendSuccess)
-					msg.SetData(data)
-					return msg
+					return setMSG(alertSendSuccess, data, msg)
 				}
 				err = m.saveMsg(inboxBucket, data.RecipientID, data)
 				if err != nil {
 					data.Status = http.StatusInternalServerError
-					msg.SetEvent(alertSendFailed)
-					msg.SetData(data)
-					return msg
+					return setMSG(alertSendFailed, data, msg)
 				}
 				data.Status = http.StatusOK
-				msg.SetEvent(alertSendSuccess)
-				msg.SetData(data)
-				return msg
+				return setMSG(alertSendSuccess, data, msg)
 			}
 		}
 	case receiveEvt:
@@ -145,17 +137,15 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 				err := m.deletMsg(inboxBucket, p.ID, data)
 				if err != nil {
 					data.Status = http.StatusInternalServerError
-					msg.SetData(data)
-					return msg
+					return return setMSG("",data,msg)
 				}
 				err = m.saveMsg(draftBucket, p.ID, data)
 				if err != nil {
 					data.Status = http.StatusInternalServerError
 					msg.SetData(data)
-					return msg
+					return setMSG("",data,msg)
 				}
-				msg.SetEvent(alertSendFailed)
-				return msg
+				return setMSG(alertSendFailed,nil,msg)
 			}
 
 		}
@@ -193,4 +183,14 @@ func (m *Messenger) isOnline(id string) bool {
 		return true
 	}
 	return false
+}
+
+func setMSG(evt string, data interface{}, msg *golem.Message) *golem.Message {
+	if evt != "" {
+		msg.SetEvent(evt)
+	}
+	if data != nil {
+		msg.SetData(data)
+	}
+	return msg
 }

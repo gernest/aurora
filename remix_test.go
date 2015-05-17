@@ -454,18 +454,29 @@ func TestRemix_Logout(t *testing.T) {
 }
 
 func TestRemix_Profile(t *testing.T) {
+	var (
+		profilePath = "/profile"
+		loginPath   = "/auth/login"
+		pass        = "mamamia"
+	)
+
 	emails := []string{
 		"gernest@aurora.mza",
 		"gernest@aurora.tz",
 		"gernest@aurora.tx",
 	}
 
-	ts, _, rx := testServer(t)
+	ts, client, rx := testServer(t)
 	defer ts.Close()
 	// create accounts
 	for k, v := range pids {
 		usr := &User{EmailAddress: emails[k], UUID: v}
-		err := CreateAccount(setDB(rx.db, rx.cfg.AccountsDB), usr, rx.cfg.AccountsBucket)
+		ps, err := hashPassword(pass)
+		if err != nil {
+			t.Error(err)
+		}
+		usr.Pass = ps
+		err = CreateAccount(setDB(rx.db, rx.cfg.AccountsDB), usr, rx.cfg.AccountsBucket)
 		if err != nil {
 			t.Error(err)
 		}
@@ -621,8 +632,83 @@ func TestRemix_Profile(t *testing.T) {
 	if !contains(w.Body.String(), "shit not found") {
 		t.Errorf("Expected 404 page got %s", w.Body.String())
 	}
-
 	rx.cfg.AccountsBucket = bAcc
+
+	// POST
+	profileForm := url.Values{
+		"city":    {"mwanza"},
+		"country": {"Tanzania"},
+	}
+	vars = url.Values{
+		"u":  {"true"},
+		"id": {pids[0]},
+	}
+
+	res, err := client.PostForm(fmt.Sprintf("%s%s?%s", ts.URL, profilePath, vars.Encode()), profileForm)
+	defer res.Body.Close()
+	if err != nil {
+		t.Error(err)
+	}
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("Expected %d got %d", http.StatusOK, res.StatusCode)
+	}
+	buf := &bytes.Buffer{}
+	io.Copy(buf, res.Body)
+	if !contains(buf.String(), "login-form") {
+		t.Errorf("Expected to redirect to login path got %s", buf.String())
+	}
+
+	req5, err := http.NewRequest("POST", fmt.Sprintf("/profile?%s", vars.Encode()), strings.NewReader(profileForm.Encode()))
+	if err != nil {
+		t.Error(err)
+	}
+	req5.Header.Set("X-Requested-With", "XMLHttpRequest")
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, req5)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("Expected %d got %d", http.StatusForbidden, w.Code)
+	}
+	if !contains(w.Body.String(), errForbidden.Error()) {
+		t.Errorf("Expected %s to contain %s", w.Body.String(), errForbidden.Error())
+	}
+
+	// login
+	varsLogin := url.Values{
+		"email":    {emails[0]},
+		"password": {pass},
+	}
+	res1, err := client.PostForm(fmt.Sprintf("%s%s", ts.URL, loginPath), varsLogin)
+	defer res1.Body.Close()
+	if err != nil {
+		t.Error(err)
+	}
+	if res1.StatusCode != http.StatusOK {
+		t.Errorf("Expected %d got %d", http.StatusOK, res1.StatusCode)
+	}
+	buf.Reset()
+	io.Copy(buf, res1.Body)
+	if !contains(buf.String(), "search") {
+		t.Errorf("Expected not to be in session got %s", buf.String())
+	}
+	vars = url.Values{
+		"u":  {"true"},
+		"id": {pids[1]},
+	}
+
+	res2, err := client.PostForm(fmt.Sprintf("%s%s?%s", ts.URL, profilePath, vars.Encode()), profileForm)
+	defer res.Body.Close()
+	if err != nil {
+		t.Error(err)
+	}
+	if res2.StatusCode != http.StatusInternalServerError {
+		t.Errorf("Expected %d got %d", http.StatusInternalServerError, res.StatusCode)
+	}
+	buf.Reset()
+	io.Copy(buf, res2.Body)
+	if !contains(buf.String(), "forbidden") {
+		t.Errorf("Expected to render 403 template got %s", buf.String())
+	}
+
 }
 
 // This cleans up all the remix based test databases

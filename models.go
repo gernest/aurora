@@ -42,12 +42,12 @@ type Profile struct {
 	Age       int       `json:"age" gforms:"age"`
 	BirthDate time.Time `json:"birth_date" gforms:"birth_date"`
 	Height    int       `json:"height" gforms:"height"`
-	Weight    int       `json:"weight"`
-	Hobies    []string  `json:"hobies"`
-	Photos    []*Photo  `json:"photos"`
-	City      string    `json:"city"`
-	Country   string    `json:"country"`
-	Street    string    `json:"street"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"update_at"`
+	Weight    int       `json:"weight" gforms:"weight"`
+	Hobies    []string  `json:"hobies" gforms:"hobbies"`
+	Photos    []*Photo  `json:"photos" gforms:"-"`
+	City      string    `json:"city" gforms:"city"`
+	Country   string    `json:"country" gforms:"country"`
+	Street    string    `json:"street" gforms:"street"`
+	CreatedAt time.Time `json:"created_at" gforms:"-"`
+	UpdatedAt time.Time `json:"update_at" gforms:"-"`
 }
