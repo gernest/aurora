@@ -174,8 +174,8 @@ func TestSaveUploadFile(t *testing.T) {
 	}
 	checkExtension(f, "jpg", t)
 	pic, err = SaveUploadFile(pdb, f, p)
-	if err.Error()!=errIsNude.Error() {
-		t.Errorf("Expected %s got %s",errIsNude.Error(),err.Error())
+	if err.Error() != errIsNude.Error() {
+		t.Errorf("Expected %s got %s", errIsNude.Error(), err.Error())
 	}
 	if pic != nil {
 		t.Error("Expected nil")

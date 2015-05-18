@@ -8,10 +8,9 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/gorilla/mux"
-
 	"github.com/gernest/nutz"
 	"github.com/gernest/render"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 )
 
