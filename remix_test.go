@@ -26,7 +26,10 @@ func TestRemix_Home(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res, http.StatusOK, "prove it yourself")
+	err = checkResponse(res, http.StatusOK, "prove it yourself")
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func TestRemix_Register(t *testing.T) {
@@ -48,7 +51,10 @@ func TestRemix_Register(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res1, http.StatusOK)
+	err = checkResponse(res1, http.StatusOK)
+	if err != nil {
+		t.Error(err)
+	}
 
 	// Failing validation
 	vars = url.Values{
@@ -62,7 +68,10 @@ func TestRemix_Register(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res2, http.StatusOK)
+	err = checkResponse(res2, http.StatusOK)
+	if err != nil {
+		t.Error(err)
+	}
 
 	// a valid form
 	vars = url.Values{
@@ -79,7 +88,10 @@ func TestRemix_Register(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res3, http.StatusInternalServerError)
+	err = checkResponse(res3, http.StatusInternalServerError)
+	if err != nil {
+		t.Error(err)
+	}
 	rx.cfg.AccountsBucket = "accounts" //Restore our config
 
 	// case everything is ok
@@ -87,14 +99,20 @@ func TestRemix_Register(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res4, http.StatusOK, "search")
+	err = checkResponse(res4, http.StatusOK, "search")
+	if err != nil {
+		t.Error(err)
+	}
 
 	// case session is not new it should redirects to login path
 	res5, err = client.PostForm(registerURL, vars)
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res5, http.StatusOK, "/auth/logout")
+	err = checkResponse(res5, http.StatusOK, "/auth/logout")
+	if err != nil {
+		t.Error(err)
+	}
 
 	// making sure our password was encrypted
 	user, err := GetUser(setDB(rx.db, rx.cfg.AccountsDB), rx.cfg.AccountsBucket, "gernest@aurora.com")
@@ -126,7 +144,10 @@ func TestRemix_Login(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res, http.StatusOK)
+	err = checkResponse(res, http.StatusOK)
+	if err != nil {
+		t.Error(err)
+	}
 
 	// invalid form
 	vars = url.Values{
@@ -137,7 +158,10 @@ func TestRemix_Login(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res1, http.StatusOK, "login-form")
+	err = checkResponse(res1, http.StatusOK, "login-form")
+	if err != nil {
+		t.Error(err)
+	}
 
 	// case no such user but valid form
 	vars = url.Values{
@@ -148,7 +172,10 @@ func TestRemix_Login(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res2, http.StatusOK, "login-form")
+	err = checkResponse(res2, http.StatusOK, "login-form")
+	if err != nil {
+		t.Error(err)
+	}
 
 	// wrong password
 	vars = url.Values{
@@ -159,7 +186,10 @@ func TestRemix_Login(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res3, http.StatusOK, "login-form")
+	err = checkResponse(res3, http.StatusOK, "login-form")
+	if err != nil {
+		t.Error(err)
+	}
 
 	// case everything is ok, it should redirect to the path specified in Remix.cfg
 	vars = url.Values{
@@ -170,7 +200,10 @@ func TestRemix_Login(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res4, http.StatusOK, "search")
+	err = checkResponse(res4, http.StatusOK, "search")
+	if err != nil {
+		t.Error(err)
+	}
 
 }
 
@@ -200,20 +233,29 @@ func TestRemix_Uploads(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res0, http.StatusForbidden, errForbidden.Error())
+	err = checkResponse(res0, http.StatusForbidden, errForbidden.Error())
+	if err != nil {
+		t.Error(err)
+	}
 
 	res, err = client.PostForm(loginURL, vars)
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res, http.StatusOK)
+	err = checkResponse(res, http.StatusOK)
+	if err != nil {
+		t.Error(err)
+	}
 
 	content, contentType = testUpData("me.jpg", "single", t)
 	res1, err = client.Post(upURL, contentType, content)
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res1, http.StatusOK, "jpg")
+	err = checkResponse(res1, http.StatusOK, "jpg")
+	if err != nil {
+		t.Error(err)
+	}
 
 	content, contentType = testUpData("me.jpg", "multi", t)
 	res2, err = client.Post(upURL, contentType, content)
@@ -434,7 +476,10 @@ func TestRemix_Profile(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		checkResponse(t, res, http.StatusOK)
+		err = checkResponse(res, http.StatusOK)
+		if err != nil {
+			t.Error(err)
+		}
 
 		// case wrong profile url query, to be precise, the id is wrong that is it is not
 		// a valid uuid and no any profile matches. The request is standard http.
@@ -442,23 +487,30 @@ func TestRemix_Profile(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		checkResponse(t, res0, http.StatusNotFound, "shit not found")
-
+		err = checkResponse(res0, http.StatusNotFound, "shit not found")
+		if err != nil {
+			t.Error(err)
+		}
 		// case a valid profile query, and the request is standard ajax.
 		res1, err := httpGetAjax(client, fmt.Sprintf("%s/profile?%s", ts.URL, vars.Encode()))
 		defer res1.Body.Close()
 		if err != nil {
 			t.Error(err)
 		}
-		checkResponse(t, res1, http.StatusOK, v)
-
+		err = checkResponse(res1, http.StatusOK, v)
+		if err != nil {
+			t.Error(err)
+		}
 		// case wrong profile url query, to be precise, the id is wrong that is it is not
 		// a valid uuid and no any profile matches. The request is standard  ajax.
 		res2, err := httpGetAjax(client, fmt.Sprintf("%s/profile?%s", ts.URL, vars2.Encode()))
 		if err != nil {
 			t.Error(err)
 		}
-		checkResponse(t, res2, http.StatusNotFound, errNotFound.Error())
+		err = checkResponse(res2, http.StatusNotFound, errNotFound.Error())
+		if err != nil {
+			t.Error(err)
+		}
 	}
 
 	// A correct profile url query for viewing all profiles
@@ -472,14 +524,20 @@ func TestRemix_Profile(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res3, http.StatusOK)
+	err = checkResponse(res3, http.StatusOK)
+	if err != nil {
+		t.Error(err)
+	}
 
 	// case viewing all profiles via ajax
 	res4, err := httpGetAjax(client, fmt.Sprintf("%s/profile?%s", ts.URL, vars.Encode()))
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res4, http.StatusOK, pids[0])
+	err = checkResponse(res4, http.StatusOK, pids[0])
+	if err != nil {
+		t.Error(err)
+	}
 
 	// Inorder to test what if the hadler woks fine when an internal server error
 	// pccur. We set the accounts bucket to "", note that this hsould be restored
@@ -494,14 +552,20 @@ func TestRemix_Profile(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res5, http.StatusNotFound, errNotFound.Error())
+	err = checkResponse(res5, http.StatusNotFound, errNotFound.Error())
+	if err != nil {
+		t.Error(err)
+	}
 
 	// case a standard http request
 	res6, err := httpGet(client, fmt.Sprintf("%s/profile?%s", ts.URL, vars.Encode()))
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res6, http.StatusNotFound, "shit not found")
+	err = checkResponse(res6, http.StatusNotFound, "shit not found")
+	if err != nil {
+		t.Error(err)
+	}
 
 	// Restore the accounts bucket config value
 	rx.cfg.AccountsBucket = bAcc
@@ -520,15 +584,20 @@ func TestRemix_Profile(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res7, http.StatusOK, "login-form")
+	err = checkResponse(res7, http.StatusOK, "login-form")
+	if err != nil {
+		t.Error(err)
+	}
 
 	// case posting a valid form but the user is not logged in, the request is ajax.
 	res8, err := httpPostAjax(client, fmt.Sprintf("%s/profile?%s", ts.URL, vars.Encode()), strings.NewReader(profileForm.Encode()))
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res8, http.StatusForbidden, errForbidden.Error())
-
+	err = checkResponse(res8, http.StatusForbidden, errForbidden.Error())
+	if err != nil {
+		t.Error(err)
+	}
 	// login and create a session for user with pids[0]
 	varsLogin := url.Values{
 		"email":    {emails[0]},
@@ -538,7 +607,10 @@ func TestRemix_Profile(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res9, http.StatusOK, "search")
+	err = checkResponse(res9, http.StatusOK, "search")
+	if err != nil {
+		t.Error(err)
+	}
 	vars = url.Values{
 		"u":  {"true"},
 		"id": {pids[1]},
@@ -550,7 +622,10 @@ func TestRemix_Profile(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res10, http.StatusInternalServerError, "forbidden")
+	err = checkResponse(res10, http.StatusInternalServerError, "forbidden")
+	if err != nil {
+		t.Error(err)
+	}
 
 	varsTrue := url.Values{
 		"u":  {"true"},
@@ -571,8 +646,10 @@ func TestRemix_Profile(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res11, http.StatusOK, "profile-home")
-
+	err = checkResponse(res11, http.StatusOK, "profile-home")
+	if err != nil {
+		t.Error(err)
+	}
 	// case posting a valid form, the user is logged in and the request is standard http
 	profileForm3 := url.Values{
 		"city":       {"mwanza"},
@@ -584,8 +661,10 @@ func TestRemix_Profile(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	checkResponse(t, res12, http.StatusOK, "profile-home")
-
+	err = checkResponse(res12, http.StatusOK, "profile-home")
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 // This cleans up all the remix based test databases
@@ -679,17 +758,22 @@ func httpCall(client *http.Client, method, url string, header http.Header, body 
 	}
 	return client.Do(req)
 }
-func checkResponse(t *testing.T, res *http.Response, status int, contain ...string) {
+func checkResponse(res *http.Response, status int, contain ...string) error {
 	defer res.Body.Close()
+	var err listErr
 	w := &bytes.Buffer{}
 	io.Copy(w, res.Body)
 	if res.StatusCode != status {
-		t.Errorf("Expected %d got %d", status, res.StatusCode)
+		err = append(err, fmt.Errorf("Expected %d got %d \n", status, res.StatusCode))
 	}
 
 	if len(contain) > 0 {
 		if !contains(w.String(), contain[0]) {
-			t.Errorf("Expected %s to contain %s", w.String(), contain[0])
+			err = append(err, fmt.Errorf("Expected %s to contain %s", w.String(), contain[0]))
 		}
 	}
+	if len(err) > 0 {
+		return err
+	}
+	return nil
 }
