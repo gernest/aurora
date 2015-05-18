@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/gernest/nutz"
@@ -101,6 +103,13 @@ func NewRemix(cfg *RemixConfig) *Remix {
 // Home is where the homepage is
 func (rx *Remix) Home(w http.ResponseWriter, r *http.Request) {
 	data := rx.setSessionData(r)
+	if _, ok := rx.isInSession(r); ok {
+		people, err := rx.getAllProfiles()
+		if err != nil {
+			// log this?
+		}
+		data.Add("people", people)
+	}
 	rx.rendr.HTML(w, http.StatusOK, "home", data)
 }
 
@@ -156,7 +165,11 @@ func (rx *Remix) Register(w http.ResponseWriter, r *http.Request) {
 
 		// create a new profile
 		pdb := getProfileDatabase(rx.cfg.DBDir, user.UUID, rx.cfg.DBExtension)
-		profile := &Profile{ID: user.UUID}
+		profile := &Profile{
+			ID:        user.UUID,
+			FirstName: strings.ToTitle(user.FirstName),
+			LastName:  strings.ToTitle(user.LastName),
+		}
 		err = CreateProfile(setDB(rx.db, pdb), profile, rx.cfg.ProfilesBucket)
 		if err != nil {
 			// log this
@@ -362,7 +375,9 @@ func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 		flash       *Flash
 		ss          *sessions.Session
 	)
-
+	for k, v := range vars {
+		log.Printf("%s   %v", k, v)
+	}
 	pdb := getProfileDatabase(rx.cfg.DBDir, id, rx.cfg.DBExtension)
 	if r.Method == "GET" {
 		if id != "" && view == "true" && all != "true" {

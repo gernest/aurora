@@ -1,6 +1,10 @@
 package aurora
 
-import "time"
+import (
+	"html/template"
+	"net/url"
+	"time"
+)
 
 // Account is an interface for a user account
 type Account interface {
@@ -38,8 +42,11 @@ func NewUser() *User {
 // Profile contains additional information about the user
 type Profile struct {
 	ID        string    `json:"id" gforms:"-"`
+	FirstName string    `json:"first_name" gforms:"first_name"`
+	LastName  string    `json:"last_name" gforms:"last_name"`
 	Picture   *Photo    `json:"picture" gforms:"-"`
 	Age       int       `json:"age" gforms:"age"`
+	IsUpdate  bool      `json:"is_update" gforms:"-"`
 	BirthDate time.Time `json:"birth_date" gforms:"birth_date"`
 	Photos    []*Photo  `json:"photos" gforms:"-"`
 	City      string    `json:"city" gforms:"city"`
@@ -47,4 +54,24 @@ type Profile struct {
 	Street    string    `json:"street" gforms:"street"`
 	CreatedAt time.Time `json:"created_at" gforms:"-"`
 	UpdatedAt time.Time `json:"update_at" gforms:"-"`
+}
+
+func (p *Profile) ViewQuery() template.HTML {
+	vars := url.Values{
+		"id":   {p.ID},
+		"view": {"true"},
+		"all":  {"false"},
+	}
+	return template.HTML(vars.Encode())
+}
+
+func (p *Profile) UpdateQuery() string {
+	vars := url.Values{
+		"id": {p.ID},
+		"u":  {"true"},
+	}
+	return vars.Encode()
+}
+func (p *Profile) ProfilePicQuery() string {
+	return p.Picture.Query
 }

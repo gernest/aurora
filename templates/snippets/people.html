@@ -1,0 +1,23 @@
+{{ $gobal:=.}}
+{{ with .people }}
+    {{ range .}}
+        <div class="card-panel">
+            <div class="row valign-wrapper">
+                <div class="col sm2">
+                    <span>my pic</span>
+                </div>
+                <div class="col sm 8">
+                    <h5>
+                       <span>{{ .FirstName }} </span>
+                        <span>{{ .LastName }}</span>
+                    </h5>
+                </div>
+                <div class="col sm2">
+                    <a class="btn" href="/profile?{{.ViewQuery}}">
+                        <span>angalia</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    {{end}}
+{{end}}
