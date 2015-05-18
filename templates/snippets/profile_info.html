@@ -1,26 +1,41 @@
-<div class="row">
-    <div class="col m12 s12">
-        <ul class="collection">
-            <li class="collection-item avatar">
-                <img src="/static/img/profile.png" alt="" class="circle">
-                <span class="title">{{.user.FirstName}}</span>
-                <span>{{.user.LastName}}</span>
-                <a href="#!" class="secondary-content up-btn"><i
-                        class="mdi-action-grade"></i>update</a>
-            </li>
-            <li class="collection-item">
-                <form>
-                    <button class="btn">Upload profile picture</button>
-                </form>
-            </li>
-            <li class="collection-item">
-                <form>
-                    <button class="btn">Add pictures to your gallery</button>
-                </form>
-            </li>
-        </ul>
-
+{{ with .profile }}
+<div class="container">
+    <div class="row">
+        <div class="col sm12 m12">
+            <ul class="collection">
+                <li class="collection-item avatar">
+                    <img src="images/yuna.jpg" alt="" class="circle">
+                    <h5>
+                        <span>{{ .FirstName}}</span>
+                        <span>{{.LastName }}</span>
+                    </h5>
+                </li>
+                <li class="collection-item avatar">
+                    <span class="title">umri</span>
+                    <h5>{{.Age}}</h5>
+                </li>
+                <li class="collection-item avatar">
+                    <span class="title">jinsia</span>
+                    <h5>Mwanaume</h5>
+                </li>
+                <li class="collection-item avatar">
+                    <span class="title">Jiji</span>
+                    <h5>{{.City}}</h5>
+                </li>
+                <li class="collection-item avatar">
+                    <span class="title">Nchi</span>
+                    <h5>{{.Country}}</h5>
+                </li>
+                <li class="collection-item avatar">
+                    <span class="title">Mtaa</span>
+                    <h5>{{.Street}}</h5>
+                </li>
+                <li class="collection-item"><div>Angalia picha zangu<a href="#!" class="secondary-content btn"><i class="mdi-content-send"></i></a></div></li>
+                <li class="collection-item"><div>Karibu tuongee<a href="#!" class="secondary-content btn"><i class="mdi-content-send"></i></a></div></li>
+                <li class="collection-item"><div>Nifungie<a href="#!" class="secondary-content btn"><i class="mdi-content-send"></i></a></div></li>
+                <li class="collection-item"><div>Niko Pande zipi?<a href="#!" class="secondary-content btn"><i class="mdi-content-send"></i></a></div></li>
+            </ul>
+        </div>
     </div>
-
 </div>
-</div>
+{{ end }}

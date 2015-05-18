@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -375,9 +374,7 @@ func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 		flash       *Flash
 		ss          *sessions.Session
 	)
-	for k, v := range vars {
-		log.Printf("%s   %v", k, v)
-	}
+
 	pdb := getProfileDatabase(rx.cfg.DBDir, id, rx.cfg.DBExtension)
 	if r.Method == "GET" {
 		if id != "" && view == "true" && all != "true" {

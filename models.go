@@ -1,10 +1,6 @@
 package aurora
 
-import (
-	"html/template"
-	"net/url"
-	"time"
-)
+import "time"
 
 // Account is an interface for a user account
 type Account interface {
@@ -54,24 +50,4 @@ type Profile struct {
 	Street    string    `json:"street" gforms:"street"`
 	CreatedAt time.Time `json:"created_at" gforms:"-"`
 	UpdatedAt time.Time `json:"update_at" gforms:"-"`
-}
-
-func (p *Profile) ViewQuery() template.HTML {
-	vars := url.Values{
-		"id":   {p.ID},
-		"view": {"true"},
-		"all":  {"false"},
-	}
-	return template.HTML(vars.Encode())
-}
-
-func (p *Profile) UpdateQuery() string {
-	vars := url.Values{
-		"id": {p.ID},
-		"u":  {"true"},
-	}
-	return vars.Encode()
-}
-func (p *Profile) ProfilePicQuery() string {
-	return p.Picture.Query
 }

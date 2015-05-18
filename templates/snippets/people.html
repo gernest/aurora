@@ -1,23 +1,26 @@
 {{ $gobal:=.}}
 {{ with .people }}
+<table class="hoverable ">
     {{ range .}}
-        <div class="card-panel">
-            <div class="row valign-wrapper">
-                <div class="col sm2">
-                    <span>my pic</span>
-                </div>
-                <div class="col sm 8">
-                    <h5>
-                       <span>{{ .FirstName }} </span>
-                        <span>{{ .LastName }}</span>
-                    </h5>
-                </div>
-                <div class="col sm2">
-                    <a class="btn" href="/profile?view=true&id={{.ID}}&all=false&off={{.ID}}">
-                        <span>angalia</span>
-                    </a>
-                </div>
+    <tr>
+        <td>
+            <span>my pic</span>
+        </td>
+        <td>
+            <div class="card-panel">
+                <h5>
+                    <span>{{ .FirstName }} </span>
+                    <span>{{ .LastName }}</span>
+                </h5>
             </div>
-        </div>
+        </td>
+        <td>
+            <a class="btn right"
+               href="/profile?view=true&id={{.ID}}&all=false&off={{.ID}}">
+                <span>angalia</span>
+            </a>
+        </td>
+    </tr>
     {{end}}
+</table>
 {{end}}
