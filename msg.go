@@ -36,9 +36,12 @@ type MSG struct {
 	ReceivedAt  time.Time `json:"received_at"`
 	Status      int       `json:"status"`
 }
-type infoMSG struct {
-	Title string `json:"title"`
-	Body  string `json:"body"`
+
+// InfoMSG this is for sharing information across the messenger nodes
+type InfoMSG struct {
+	Title  string `json:"title"`
+	Body   string `json:"body"`
+	Sender string `json:"sender"`
 }
 
 // Messenger the messanger from the gods
@@ -47,6 +50,16 @@ type Messenger struct {
 	rm     *golem.RoomManager
 	route  *golem.Router
 	online map[string]*Profile
+}
+
+// NewMessenger creates a new messenger
+func NewMessenger(rx *Remix) *Messenger {
+	return &Messenger{
+		rx:     rx,
+		rm:     golem.NewRoomManager(),
+		route:  golem.NewRouter(),
+		online: make(map[string]*Profile),
+	}
 }
 
 func (m *Messenger) validateSession(w http.ResponseWriter, r *http.Request) bool {
@@ -63,6 +76,7 @@ func (m *Messenger) onConnect(conn *golem.Connection, r *http.Request) {
 		if err == nil {
 			if prof, ok := m.online[p.ID]; !ok && prof == nil {
 				conn.UserID = p.ID
+				conn.SetSendCallBack(m.callMeBack)
 				m.rm.Join(mainRoom, conn)
 				m.rm.Join(p.ID, conn)
 			}
@@ -193,4 +207,21 @@ func setMSG(evt string, data interface{}, msg *golem.Message) *golem.Message {
 		msg.SetData(data)
 	}
 	return msg
+}
+func (m *Messenger) info(conn *golem.Connection, msg *InfoMSG) {
+	m.rm.Emit(mainRoom, "info", msg)
+}
+
+func (m *Messenger) send(conn *golem.Connection, msg *MSG) {
+	m.rm.Emit(msg.SenderID, sendEvt, msg)
+}
+
+// Handler handles websocket connections for messaging
+func (m *Messenger) Handler() func(http.ResponseWriter, *http.Request) {
+	m.route.OnHandshake(m.validateSession)
+	m.route.OnConnect(m.onConnect)
+	m.route.OnClose(m.onClose)
+	m.route.On("info", m.info)
+	m.route.On("send", m.send)
+	return m.route.Handler()
 }

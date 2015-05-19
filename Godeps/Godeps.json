@@ -49,6 +49,11 @@
 			"Rev": "2dbddebb8266b93c5e6b119efb54e89043186f3f"
 		},
 		{
+			"ImportPath": "github.com/koyachi/go-nude",
+			"Comment": "v0.0.1-14-g699a88f",
+			"Rev": "699a88f33605865928ccd8cdd39bbce80fb1aaef"
+		},
+		{
 			"ImportPath": "github.com/nu7hatch/gouuid",
 			"Rev": "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
 		},

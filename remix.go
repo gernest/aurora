@@ -28,6 +28,7 @@ type Remix struct {
 	sess  *Session
 	rendr *render.Render
 	cfg   *RemixConfig
+	msg   *Messenger
 }
 
 // RemixConfig contain configuration values for Remix
@@ -96,6 +97,7 @@ func NewRemix(cfg *RemixConfig) *Remix {
 		rendr: render.New(rOpts),
 		cfg:   cfg,
 	}
+	rx.msg = NewMessenger(rx)
 	return rx
 }
 
@@ -524,13 +526,14 @@ func (rx *Remix) getAllProfiles() ([]*Profile, error) {
 // Routes returs a mux of all registered routes
 func (rx *Remix) Routes() *mux.Router {
 	var (
-		homePath     = "/"
-		registerPath = "/auth/register"
-		loginPath    = "/auth/login"
-		logoutPath   = "/auth/logout"
-		imagesPath   = "/imgs"
-		uploadsPath  = "/uploads"
-		profilePath  = "/profile"
+		homePath      = "/"
+		registerPath  = "/auth/register"
+		loginPath     = "/auth/login"
+		logoutPath    = "/auth/logout"
+		imagesPath    = "/imgs"
+		uploadsPath   = "/uploads"
+		profilePath   = "/profile"
+		messengerPath = "/msg"
 	)
 	h := mux.NewRouter()
 	h.HandleFunc(homePath, rx.Home)
@@ -540,6 +543,7 @@ func (rx *Remix) Routes() *mux.Router {
 	h.HandleFunc(imagesPath, rx.ServeImages).Methods("GET")
 	h.HandleFunc(uploadsPath, rx.Uploads)
 	h.HandleFunc(profilePath, rx.Profile)
+	h.HandleFunc(messengerPath, rx.msg.Handler())
 	return h
 }
 
