@@ -388,6 +388,7 @@ func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				rx.rendr.JSON(w, http.StatusOK, p)
+				return
 			}
 			p, err := GetProfile(setDB(rx.db, pdb), rx.cfg.ProfilesBucket, id)
 			if err != nil {
