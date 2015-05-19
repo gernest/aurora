@@ -46,19 +46,17 @@ type InfoMSG struct {
 
 // Messenger the messanger from the gods
 type Messenger struct {
-	rx     *Remix
-	rm     *golem.RoomManager
-	route  *golem.Router
-	online map[string]*Profile
+	rx    *Remix
+	rm    *golem.RoomManager
+	route *golem.Router
 }
 
 // NewMessenger creates a new messenger
 func NewMessenger(rx *Remix) *Messenger {
 	return &Messenger{
-		rx:     rx,
-		rm:     golem.NewRoomManager(),
-		route:  golem.NewRouter(),
-		online: make(map[string]*Profile),
+		rx:    rx,
+		rm:    golem.NewRoomManager(),
+		route: golem.NewRouter(),
 	}
 }
 
@@ -74,26 +72,20 @@ func (m *Messenger) onConnect(conn *golem.Connection, r *http.Request) {
 	if ss, ok := m.rx.isInSession(r); ok && !ss.IsNew {
 		_, p, err := m.rx.getCurrentUserAndProfile(ss)
 		if err == nil {
-			if prof, ok := m.online[p.ID]; !ok && prof == nil {
-				conn.UserID = p.ID
-				conn.SetSendCallBack(m.callMeBack)
-				m.rm.Join(mainRoom, conn)
-				m.rm.Join(p.ID, conn)
-			}
+			conn.UserID = p.ID
+			conn.SetSendCallBack(m.callMeBack)
+			m.rm.Join(mainRoom, conn)
+			m.rm.Join(p.ID, conn)
 		}
 	}
 }
 
-func (m *Messenger) onClose(conn *golem.Connection) {
-	delete(m.online, conn.UserID)
-}
-
 func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *golem.Message {
+	p := m.currentUser(conn)
 	switch msg.GetEvent() {
 	case sendEvt:
 		switch data := msg.GetData().(type) {
 		case *MSG:
-			p := m.currentUser(conn)
 			if p != nil {
 				if p.ID != data.SenderID {
 					data.Status = http.StatusBadRequest
@@ -105,11 +97,6 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 				if err != nil {
 					data.Status = http.StatusInternalServerError
 					return setMSG(alertSendFailed, data, msg)
-				}
-				if m.isOnline(data.RecipientID) {
-					m.rm.Emit(data.RecipientID, receiveEvt, data)
-					data.Status = http.StatusOK
-					return setMSG(alertSendSuccess, data, msg)
 				}
 				err = m.saveMsg(inboxBucket, data.RecipientID, data)
 				if err != nil {
@@ -123,15 +110,10 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 	case receiveEvt:
 		switch data := msg.GetData().(type) {
 		case *MSG:
-			p := m.currentUser(conn)
 			if p != nil {
 				if p.ID == data.RecipientID {
 					err := m.saveMsg(inboxBucket, p.ID, data)
 					if err != nil {
-						if m.isOnline(data.SenderID) {
-							// inform the sender that sending failed
-							m.rm.Emit(data.SenderID, sendFailedEvt, data)
-						}
 						data.Status = http.StatusInternalServerError
 						msg.SetData(data)
 						return msg
@@ -146,7 +128,6 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 	case sendFailedEvt:
 		switch data := msg.GetData().(type) {
 		case *MSG:
-			p := m.currentUser(conn)
 			if p != nil {
 				err := m.deletMsg(inboxBucket, p.ID, data)
 				if err != nil {
@@ -192,13 +173,6 @@ func (m *Messenger) currentUser(conn *golem.Connection) *Profile {
 	return p
 }
 
-func (m *Messenger) isOnline(id string) bool {
-	if p, ok := m.online[id]; ok && p != nil {
-		return true
-	}
-	return false
-}
-
 func setMSG(evt string, data interface{}, msg *golem.Message) *golem.Message {
 	if evt != "" {
 		msg.SetEvent(evt)
@@ -220,7 +194,6 @@ func (m *Messenger) send(conn *golem.Connection, msg *MSG) {
 func (m *Messenger) Handler() func(http.ResponseWriter, *http.Request) {
 	m.route.OnHandshake(m.validateSession)
 	m.route.OnConnect(m.onConnect)
-	m.route.OnClose(m.onClose)
 	m.route.On("info", m.info)
 	m.route.On("send", m.send)
 	return m.route.Handler()
