@@ -99,6 +99,7 @@ func TestRemix_Register(t *testing.T) {
     if err != nil {
         t.Error(err)
     }
+
     err = checkResponse(res4, http.StatusOK, "search")
     if err != nil {
         t.Error(err)
