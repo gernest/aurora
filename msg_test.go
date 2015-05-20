@@ -102,7 +102,7 @@ func TestMessenger(t *testing.T) {
 
 	// try sending a bad request
 	tmsg := &MSG{
-		SenderID: getUUID(),
+		SenderID: userID,
 		Text:     "hellp gernest",
 	}
 	d, err := marshalAndPach("send", tmsg)
@@ -118,6 +118,26 @@ func TestMessenger(t *testing.T) {
 	if err != nil {
 		t.Errorf("writing message %v", err)
 	}
+	err = ws2.SetReadDeadline(time.Now().Add(time.Second))
+	if err != nil {
+		t.Errorf("set write deadline %v", err)
+	}
+	var rst = make([]byte, 512)
+	_, err = ws2.Read(rst)
+	if err != nil {
+		t.Errorf("reding message %v", err)
+	}
+	evt, dmsg, err := unpackMSG(rst)
+	if err != nil {
+		t.Errorf("unpacking read message %v \n %s", err, string(rst))
+
+	}
+	if evt != alertSendSuccess {
+		t.Errorf("Expected %s got %s", alertSendSuccess, evt)
+	}
+	if !contains(string(dmsg), tmsg.Text) {
+		t.Errorf("Expected %s to contain %s", string(rst), tmsg.Text)
+	}
 }
 
 func marshalAndPach(name string, dPtr interface{}) ([]byte, error) {
@@ -130,8 +150,8 @@ func marshalAndPach(name string, dPtr interface{}) ([]byte, error) {
 	}
 }
 
-func unpackMSG(data []byte) (string, interface{}, error) {
-	var protocolSeperator = " "
+func unpackMSG(data []byte) (string, []byte, error) {
+	protocolSeperator := " "
 	result := strings.SplitN(string(data), protocolSeperator, 2)
 	if len(result) != 2 {
 		return "", nil, errors.New("Unable to extract event name from data.")
