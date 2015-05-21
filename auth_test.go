@@ -9,67 +9,100 @@ import (
 var testDb = nutz.NewStorage("fixture/test.ddb", 0600, nil)
 
 func TestCreateAccount(t *testing.T) {
-	var aBucket = "accounts"
-	usr := NewUser()
-	usr.EmailAddress = "gernest@mwanza.tz"
-	if err := CreateAccount(testDb, usr, aBucket); err != nil {
-		t.Error(err)
+	var (
+		bucket = "test_create_account"
+		db     = nutz.NewStorage("fixture/test_auth_create.ddb", 0600, nil)
+	)
+	defer db.DeleteDatabase()
+	dataset := []struct {
+		uuid, email string
+	}{
+		{"db0668ac-7eba-40dd-56ee-0b1c0b9b415d", "gernest@aurora.com"},
+		{"e6917dfe-b4f6-49b8-5628-83dd2a430e9a", "gernest@aurora.tz"},
+		{"bc5288cf-4120-4f3c-5957-b19e093a12f4", "gernest@aurora.io"},
+	}
+	for _, u := range dataset {
+		usr := &User{
+			EmailAddress: u.email,
+			UUID:         u.uuid,
+		}
+		if err := CreateAccount(db, usr, bucket); err != nil {
+			t.Error(err)
+		}
 	}
 }
 
 func TestGetUser(t *testing.T) {
-	var aBucket = "accounts"
-	usr := NewUser()
-	usr.EmailAddress = "geo@mwanza.tz"
-	if err := CreateAccount(testDb, usr, aBucket); err != nil {
-		t.Error(err)
+	var (
+		bucket = "test_get"
+		db     = nutz.NewStorage("fixture/test_auth_get.ddb", 0600, nil)
+		user   *User
+		err    error
+	)
+	defer db.DeleteDatabase()
+	dataset := []struct {
+		uuid, email string
+	}{
+		{"db0668ac-7eba-40dd-56ee-0b1c0b9b415d", "gernest@aurora.com"},
+		{"e6917dfe-b4f6-49b8-5628-83dd2a430e9a", "gernest@aurora.tz"},
+		{"bc5288cf-4120-4f3c-5957-b19e093a12f4", "gernest@aurora.io"},
 	}
-	user, err := GetUser(testDb, aBucket, usr.EmailAddress)
-	if err != nil {
-		t.Error(err)
+	for _, u := range dataset {
+		usr := &User{
+			EmailAddress: u.email,
+			UUID:         u.uuid,
+		}
+		if err = CreateAccount(db, usr, bucket); err != nil {
+			t.Error(err)
+		}
 	}
-	if user.EmailAddress != usr.EmailAddress {
-		t.Errorf("Expected %s got %s", usr.EmailAddress, user.EmailAddress)
+	for _, u := range dataset {
+		if user, err = GetUser(db, bucket, u.email); err != nil {
+			t.Errorf("geeting user %v", err)
+		}
+		if user.UUID != u.uuid {
+			t.Errorf("expected %s got %s", u.uuid, user.UUID)
+		}
+		if user.EmailAddress != u.email {
+			t.Errorf("expected %s got %s", u.email, user.EmailAddress)
+		}
 	}
 }
 func TestGetAll(t *testing.T) {
+	t.Parallel()
 	var (
-		testBucket = "test buck"
-		origin     string
-		curr       []string
-		err        error
+		bucket = "get_all"
+		db     = nutz.NewStorage("fixture/test_auth_get_all.ddb", 0600, nil)
+		origin string
+		curr   []string
+		err    error
 	)
-
+	defer db.DeleteDatabase()
 	for _ = range []int{1, 2, 3, 4} {
 		usr := &User{
 			UUID: getUUID(),
 		}
 		usr.EmailAddress = usr.UUID
-		err = CreateAccount(testDb, usr, testBucket)
+		err = CreateAccount(db, usr, bucket)
 		if err != nil {
 			t.Error(err)
 		}
 		origin = origin + "," + usr.UUID
 	}
-	curr, err = GetAllUsers(testDb, testBucket)
+	curr, err = GetAllUsers(db, bucket)
 	if err != nil {
 		t.Error(err)
 	}
 	for _, v := range curr {
 		if !contains(origin, v) {
-			t.Errorf("Expected %s to be in %s", v, origin)
+			t.Errorf("expected %s to be in %s", v, origin)
 		}
 	}
 	zz, err := GetAllUsers(testDb, "lora")
 	if err == nil {
-		t.Error("Expected an error")
+		t.Error("expected an error")
 	}
 	if zz != nil {
-		t.Errorf("Expected nil got %v", zz)
+		t.Errorf("expected nil got %v", zz)
 	}
-}
-
-// remove the database used by the above tests
-func TestClean_auth(t *testing.T) {
-	testDb.DeleteDatabase()
 }

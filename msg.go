@@ -4,26 +4,32 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/muesli/cache2go"
+
 	"github.com/gernest/golem"
 )
 
 const (
-	mainRoom string = "aurora"
+	mainRoom = "aurora"
 
 	// events
-	sendEvt       string = "send"
-	receiveEvt    string = "receive"
-	sendFailedEvt string = "sendFailed"
+	sendEvt       = "send"
+	receiveEvt    = "receive"
+	sendFailedEvt = "sendFailed"
+	ignore        = "ignore"
 
 	// message buckets
-	ouboxBucket string = "outbox"
-	inboxBucket string = "inbox"
-	draftBucket string = "drafts"
+	outboxBucket = "outbox"
+	inboxBucket  = "inbox"
+	draftBucket  = "drafts"
 
 	// message allerts
-	alertSendSuccess string = "sendSuccess"
-	alertSendFailed  string = "sendFailled"
-	alertInbox       string = "messageInbox"
+	alertSendSuccess = "sendSuccess"
+	alertSendFailed  = "sendFailled"
+	alertInbox       = "messageInbox"
+
+	// cache
+	onlineCache = "online"
 )
 
 // MSG this is the base message exchanged between users
@@ -46,17 +52,19 @@ type InfoMSG struct {
 
 // Messenger the messanger from the gods
 type Messenger struct {
-	rx    *Remix
-	rm    *golem.RoomManager
-	route *golem.Router
+	rx     *Remix
+	rm     *golem.RoomManager
+	route  *golem.Router
+	online *cache2go.CacheTable
 }
 
 // NewMessenger creates a new messenger
 func NewMessenger(rx *Remix) *Messenger {
 	return &Messenger{
-		rx:    rx,
-		rm:    golem.NewRoomManager(),
-		route: golem.NewRouter(),
+		rx:     rx,
+		rm:     golem.NewRoomManager(),
+		route:  golem.NewRouter(),
+		online: cache2go.Cache(onlineCache),
 	}
 }
 
@@ -76,6 +84,7 @@ func (m *Messenger) onConnect(conn *golem.Connection, r *http.Request) {
 			conn.SetSendCallBack(m.callMeBack)
 			m.rm.Join(mainRoom, conn)
 			m.rm.Join(p.ID, conn)
+			m.online.Add(p.ID, 0, p)
 		}
 	}
 }
@@ -93,10 +102,16 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 					msg.SetData(data)
 					return msg
 				}
-				err := m.saveMsg(ouboxBucket, p.ID, data)
+				data.SentAt = time.Now()
+				err := m.saveMsg(outboxBucket, p.ID, data)
 				if err != nil {
 					data.Status = http.StatusInternalServerError
 					return setMSG(alertSendFailed, data, msg)
+				}
+				if m.isOnline(data.RecipientID) {
+					m.rm.Emit(data.RecipientID, receiveEvt, data)
+					data.Status = http.StatusOK
+					return setMSG(alertSendSuccess, data, msg)
 				}
 				err = m.saveMsg(inboxBucket, data.RecipientID, data)
 				if err != nil {
@@ -112,33 +127,32 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 		case *MSG:
 			if p != nil {
 				if p.ID == data.RecipientID {
+					data.ReceivedAt = time.Now()
 					err := m.saveMsg(inboxBucket, p.ID, data)
 					if err != nil {
-						data.Status = http.StatusInternalServerError
-						msg.SetData(data)
+						msg.SetEvent(ignore)
+						if m.isOnline(data.SenderID) {
+							m.rm.Emit(data.SenderID, sendFailedEvt, data)
+							return msg
+						}
+						err = m.moveTo(draftBucket, outboxBucket, data.SenderID, data.ID)
+						if err != nil {
+							// TODO: log this?
+						}
 						return msg
 					}
 					data.Status = http.StatusOK
-					msg.SetEvent(alertInbox)
-					msg.SetData(data)
-					return msg
+					return setMSG(alertInbox, data, msg)
 				}
 			}
 		}
 	case sendFailedEvt:
 		switch data := msg.GetData().(type) {
 		case *MSG:
-			if p != nil {
-				err := m.deletMsg(inboxBucket, p.ID, data)
+			if p != nil && data.SenderID == p.ID {
+				err := m.moveTo(draftBucket, outboxBucket, p.ID, data.ID)
 				if err != nil {
-					data.Status = http.StatusInternalServerError
-					return setMSG("", data, msg)
-				}
-				err = m.saveMsg(draftBucket, p.ID, data)
-				if err != nil {
-					data.Status = http.StatusInternalServerError
-					msg.SetData(data)
-					return setMSG("", data, msg)
+					// TODO: log this?
 				}
 				return setMSG(alertSendFailed, nil, msg)
 			}
@@ -148,6 +162,8 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 	}
 	return msg
 }
+
+// persist a message
 func (m *Messenger) saveMsg(bucket string, profileID string, msg *MSG) error {
 	if msg.ID == "" {
 		msg.ID = getUUID()
@@ -156,12 +172,31 @@ func (m *Messenger) saveMsg(bucket string, profileID string, msg *MSG) error {
 	mdb := setDB(m.rx.db, pdb)
 	return marshalAndCreate(mdb, msg, bucket, msg.ID, m.rx.cfg.MessagesBucket)
 }
+
+// deletes a message
 func (m *Messenger) deletMsg(bucket, profileID string, msg *MSG) error {
 	pdb := getProfileDatabase(m.rx.cfg.DBDir, profileID, m.rx.cfg.DBExtension)
 	mdb := setDB(m.rx.db, pdb)
 	mdb.Delete(bucket, msg.ID, m.rx.cfg.MessagesBucket)
 	return mdb.Error
 }
+
+// moves message data from one bucket to another.
+func (m *Messenger) moveTo(dest, src, profileID, msgID string) error {
+	pdb := getProfileDatabase(m.rx.cfg.DBDir, profileID, m.rx.cfg.DBExtension)
+	mdb := setDB(m.rx.db, pdb)
+	d := mdb.Get(src, msgID, m.rx.cfg.MessagesBucket)
+	if d.Error != nil {
+		return d.Error
+	}
+	s := mdb.Create(dest, msgID, d.Data, m.rx.cfg.MessagesBucket)
+	if s.Error != nil {
+		return s.Error
+	}
+	return mdb.Delete(src, msgID, m.rx.cfg.MessagesBucket).Error
+}
+
+// gets the user's profile of a given websocket connection.
 func (m *Messenger) currentUser(conn *golem.Connection) *Profile {
 	pdb := getProfileDatabase(m.rx.cfg.DBDir, conn.UserID, m.rx.cfg.DBExtension)
 	mdb := setDB(m.rx.db, pdb)
@@ -173,6 +208,7 @@ func (m *Messenger) currentUser(conn *golem.Connection) *Profile {
 	return p
 }
 
+// sets the event and data attributes of a givenMSG.
 func setMSG(evt string, data interface{}, msg *golem.Message) *golem.Message {
 	if evt != "" {
 		msg.SetEvent(evt)
@@ -190,10 +226,19 @@ func (m *Messenger) send(conn *golem.Connection, msg *MSG) {
 	m.rm.Emit(msg.SenderID, sendEvt, msg)
 }
 
+func (m *Messenger) onClose(conn *golem.Connection) {
+	m.online.Delete(conn.UserID)
+}
+
+func (m *Messenger) isOnline(key string) bool {
+	return m.online.Exists(key)
+}
+
 // Handler handles websocket connections for messaging
 func (m *Messenger) Handler() func(http.ResponseWriter, *http.Request) {
 	m.route.OnHandshake(m.validateSession)
 	m.route.OnConnect(m.onConnect)
+	m.route.OnClose(m.onClose)
 	m.route.On("info", m.info)
 	m.route.On("send", m.send)
 	return m.route.Handler()

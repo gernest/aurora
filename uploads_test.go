@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/gernest/nutz"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -99,9 +100,6 @@ func TestGetMultipleFileUpload(t *testing.T) {
 	if len(files) != 3 {
 		t.Errorf("Expected 3 files got %d", len(files))
 	}
-
-	// just a bonus, Wanna know if listErr is fine
-	testListErr(t)
 }
 func TestSaveUploadFile(t *testing.T) {
 	var (
@@ -114,10 +112,10 @@ func TestSaveUploadFile(t *testing.T) {
 		p         *Profile
 		pic       *Photo
 	)
-
-	// JPG
-	pdb := setDB(testDb, uploadsDB)
+	pdb := nutz.NewStorage(uploadsDB, 0600, nil)
 	defer pdb.DeleteDatabase()
+
+	//jpg
 	req, err = requestWithFile("me.jpg")
 	if err != nil {
 		t.Error(err)
@@ -141,10 +139,10 @@ func TestSaveUploadFile(t *testing.T) {
 		t.Error(err)
 	}
 	if f.Ext != pic.Type {
-		t.Errorf("Expected %s  got %s", f.Ext, pic.Type)
+		t.Errorf(" checking file type: expected %s  got %s", f.Ext, pic.Type)
 	}
 
-	// PNG
+	// png
 	req1, err = requestWithFile("mint.png")
 	if err != nil {
 		t.Error(err)
@@ -159,7 +157,7 @@ func TestSaveUploadFile(t *testing.T) {
 		t.Error(err)
 	}
 	if f.Ext != pic.Type {
-		t.Errorf("Expected %s  got %s", f.Ext, pic.Type)
+		t.Errorf("checking file type: expected %s  got %s", f.Ext, pic.Type)
 	}
 
 	// Nude
@@ -175,10 +173,10 @@ func TestSaveUploadFile(t *testing.T) {
 	checkExtension(f, "jpg", t)
 	pic, err = SaveUploadFile(pdb, f, p)
 	if err.Error() != errIsNude.Error() {
-		t.Errorf("Expected %s got %s", errIsNude.Error(), err.Error())
+		t.Errorf("checking nudity: xpected %s got %s", errIsNude.Error(), err.Error())
 	}
 	if pic != nil {
-		t.Error("Expected nil")
+		t.Error("expected nil")
 	}
 }
 func checkExtension(f *FileUpload, ext string, t *testing.T) {
@@ -187,22 +185,17 @@ func checkExtension(f *FileUpload, ext string, t *testing.T) {
 		t.Error(err)
 	}
 	if rext != ext {
-		t.Errorf("Expected %s got %s", ext, rext)
+		t.Errorf(" checking file extension: expected %s got %s", ext, rext)
 	}
 }
 
 func requestWithFile(fileName string) (*http.Request, error) {
-	var (
-		buf    = &bytes.Buffer{}
-		w      = multipart.NewWriter(buf)
-		public = "public/img/"
-		f      []byte
-		err    error
-		req    *http.Request
-	)
-	defer w.Close()
+	buf := &bytes.Buffer{}
+	w := multipart.NewWriter(buf)
+	public := "public/img/"
 
-	f, err = ioutil.ReadFile(fmt.Sprintf("%s%s", public, fileName))
+	defer w.Close()
+	f, err := ioutil.ReadFile(fmt.Sprintf("%s%s", public, fileName))
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +204,7 @@ func requestWithFile(fileName string) (*http.Request, error) {
 		return nil, err
 	}
 	ww.Write(f)
-	req, err = http.NewRequest("POST", "http://bogus.com", buf)
+	req, err := http.NewRequest("POST", "http://bogus.com", buf)
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	return req, nil
 }
@@ -221,13 +214,9 @@ func requestMuliFile(fileName string, t *testing.T) *http.Request {
 		kind        = "multi"
 		testURL     = "http://bogus.com"
 		cType       = "Content-Type"
-		contentType string
-		err         error
-		content     *bytes.Buffer
-		req         *http.Request
 	)
-	content, contentType = testUpData(fileName, kind, t)
-	req, err = http.NewRequest("POST", testURL, content)
+	content, contentType := testUpData(fileName, kind, t)
+	req, err := http.NewRequest("POST", testURL, content)
 	if err != nil {
 		t.Error(err)
 	}
@@ -273,13 +262,13 @@ func requestMultiWithoutErr() (*http.Request, error) {
 	return req, nil
 }
 
-func testListErr(t *testing.T) {
+func TestListErr(t *testing.T) {
 	var err listErr
 	hello := errors.New("hello")
 	world := errors.New("wordl")
 	err = append(err, hello, world)
 	if err.Error() != hello.Error()+", "+world.Error() {
-		t.Errorf("Expected %s, %s got %s", hello.Error(), world.Error(), err.Error())
+		t.Errorf("lisErr: expected %s, %s got %s", hello.Error(), world.Error(), err.Error())
 	}
 }
 

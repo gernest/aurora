@@ -102,8 +102,9 @@ func TestMessenger(t *testing.T) {
 
 	// try sending a bad request
 	tmsg := &MSG{
-		SenderID: userID,
-		Text:     "hellp gernest",
+		SenderID:    userID,
+		Text:        "hellp gernest",
+		RecipientID: usr.UUID,
 	}
 	d, err := marshalAndPach("send", tmsg)
 	if err != nil {

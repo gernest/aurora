@@ -11,6 +11,7 @@ import (
 )
 
 func TestIsName(t *testing.T) {
+	t.Parallel()
 	var (
 		req1, req2 *http.Request
 		err        error
@@ -37,21 +38,19 @@ func TestIsName(t *testing.T) {
 	req1.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	form = Form(req1)
 	if !form.IsValid() {
-		t.Error("Not expected: validation error.")
+		t.Errorf("validating form %v", form.Errors())
 	}
 
 	// Should fail when the name field aint alphanumeric
-	vars = url.Values{
-		"name": {"g-ernest"},
-	}
+	vars = url.Values{"name": {"g-ernest"}}
 	req2, err = http.NewRequest("POST", "/", strings.NewReader(vars.Encode()))
 	if err != nil {
-		t.Error(err)
+		t.Errorf("creating new request %v", err)
 	}
 	req2.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	form = Form(req2)
 	if form.IsValid() {
-		t.Error("Expected: validation error.")
+		t.Error("expected validation errors")
 	}
 	if form.Errors().Get("name")[0] != MsgName {
 		t.Errorf("Expected %s got %s", MsgName, form.Errors().Get("name")[0])
@@ -59,6 +58,7 @@ func TestIsName(t *testing.T) {
 }
 
 func TestComposeRegisterForm(t *testing.T) {
+	t.Parallel()
 	Form := ComposeRegisterForm()
 	vars := url.Values{
 		"first_name":    {"gernest"},
@@ -67,27 +67,34 @@ func TestComposeRegisterForm(t *testing.T) {
 		"pass":          {"mypassword"},
 		"confirm_pass":  {"mypassword"},
 	}
-	req1, _ := http.NewRequest("POST", "/", strings.NewReader(vars.Encode()))
+	req1, err := http.NewRequest("POST", "/", strings.NewReader(vars.Encode()))
+	if err != nil {
+		t.Errorf("creating new request %v", err)
+	}
 	req1.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	form1 := Form(req1)
 	if !form1.IsValid() {
-		t.Error("Expected form to be valid")
+		t.Errorf("validating form %v", form1.Errors())
 	}
 	usr := form1.GetModel().(User)
 	if usr.EmailAddress != vars.Get("email_address") {
-		t.Errorf("Expected to get a user struct")
+		t.Errorf("retrieving model form: expecting %s got %s", vars.Get("email_address"), usr.EmailAddress)
 	}
 
 	vars.Set("first_name", "---")
-	req2, _ := http.NewRequest("POST", "/", strings.NewReader(vars.Encode()))
+	req2, err := http.NewRequest("POST", "/", strings.NewReader(vars.Encode()))
+	if err != nil {
+		t.Errorf("creating new request %v", err)
+	}
 	req2.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	form2 := Form(req2)
 	if form2.IsValid() {
-		t.Error("Expected: validation error.")
+		t.Error("expected validation error")
 	}
 }
 
 func TestBirthDateValidator(t *testing.T) {
+	t.Parallel()
 	var (
 		req1, req2 *http.Request
 		vars       url.Values
@@ -112,9 +119,7 @@ func TestBirthDateValidator(t *testing.T) {
 		),
 	))
 
-	vars = url.Values{
-		"date": {now.Format(time.RFC822)},
-	}
+	vars = url.Values{"date": {now.Format(time.RFC822)}}
 	req1, err = http.NewRequest("POST", "/", strings.NewReader(vars.Encode()))
 	if err != nil {
 		t.Error(err)
@@ -125,9 +130,7 @@ func TestBirthDateValidator(t *testing.T) {
 		t.Error("Expected some errors")
 	}
 
-	vars = url.Values{
-		"date": {yearsAgo(18).Format(time.RFC822)},
-	}
+	vars = url.Values{"date": {yearsAgo(18).Format(time.RFC822)}}
 	req2, err = http.NewRequest("POST", "/", strings.NewReader(vars.Encode()))
 	if err != nil {
 		t.Error(err)
