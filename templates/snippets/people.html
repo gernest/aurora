@@ -1,11 +1,15 @@
 {{ $gobal:=.}}
 {{ with .people }}
-<table class="hoverable ">
+<table class="hoverable responsive-table">
+    <thead>
+    <tr>
+        <th data-field="id"> <i class="mdi-content-add"></i></th>
+        <th data-field="name"><i class="mdi-content-add"></i></th>
+    </tr>
+    </thead>
+    <tbody>
     {{ range .}}
     <tr>
-        <td>
-            <span>my pic</span>
-        </td>
         <td>
             <div class="card-panel">
                 <h5>
@@ -16,11 +20,12 @@
         </td>
         <td>
             <a class="btn right"
-               href="/profile?view=true&id={{.ID}}&all=false&off={{.ID}}">
+               href="/profile?view=true&id={{.ID}}&all=false">
                 <span>angalia</span>
             </a>
         </td>
     </tr>
     {{end}}
+    </tbody>
 </table>
 {{end}}

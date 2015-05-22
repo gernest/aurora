@@ -3,12 +3,24 @@
     <div class="container" id="profile-home">
         <div class="row">
             <div class="col s12">
+                <div class="container" id="my-pic">
+                    <img src="/static/img/boob.jpg" alt="" class="responsive-img">
+                    <a class="btn blue" pid="{{.ID}}" id="profile-pic"> Badili picha</a>
+                </div>
+            </div>
+            <div class="col s12">
                 {{template "snippets/profile_info" .}}
             </div>
+        </div>
+        <div class="row">
             <div class=" col s12">
                 {{template "snippets/profile_update_form" .}}
             </div>
+            <div id="preview-many" class="row"></div>
         </div>
+
     </div>
 </main>
+<script src="/static/js/dropzone.js"></script>
+<script src="/static/js/profile.js"></script>
 {{template "base/footer" .}}

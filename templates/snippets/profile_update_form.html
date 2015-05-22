@@ -1,68 +1,69 @@
-<div class="up-section">
-    <div class="progress up-progress">
-        <div class="indeterminate"></div>
+{{with .profile}}
+<div class="container">
+    <h4 class="pavement center-align ">badili habari zangu</h4>
+    <div class="row">
+        <form class="col s12">
+            <div class="row">
+                <div class="input-field col s6">
+                    <input placeholder="Placeholder" id="first_name" type="text" class="validate">
+                    <label for="first_name">jina la kwanza</label>
+                </div>
+                <div class="input-field col s6">
+                    <input id="last_name" type="text" class="validate">
+                    <label for="last_name">jina la mwisho</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <input id="password" type="password" class="validate">
+                    <label for="password">tarehe ya kuzaliwa</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <select class="browser-default">
+                        <option value="" >Chagua jinsia</option>
+                        <option value="1">mwanaume</option>
+                        <option value="2">mwanamke</option>
+                        <option value="3">zombie</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <input id="password" type="password" class="validate">
+                    <label for="password">jiji</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <input id="password" type="password" class="validate">
+                    <label for="password">Nchi</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <input id="password" type="password" class="validate">
+                    <label for="password">Mtaa</label>
+                </div>
+            </div>
+            <button class="btn waves-effect waves-light" type="submit" name="action">Tuma
+                <i class="mdi-content-send right"></i>
+            </button>
+        </form>
     </div>
-    <div class="up-message"></div>
-    <!-- begin registration form-->
-    <form class="col s12 up-form" method="post"
-          action="/profile/update/{{.user.ID}}">
-        <div class="row">
-            <label for="gender">Gender</label>
-            <select id="gender" class="browser-default" name="Gender">
-                <option value="" disabled selected>Choose
-                    your gender
-                </option>
-                <option value="male">Male</option>
-                <option value="2">Female</option>
-                <option value="3">Tranny</option>
-            </select>
-        </div>
-        <div class="row">
-            <div class="input-field col s12">
-                <input id="birth" type="date"
-                       class="validate" name="BirthDate"
-                       >
-                <label for="birth" data-error="wrong"
-                       data-success="right">
-                    Birth Date</label>
+    <div class="row">
+        <div class="pavement" id="gallery-upload">
+            <div class="container">
+                <ul>
+                    <li><a class="btn blue" pid="{{.ID}}" id="pandisha-kibao">Pandisha picha zangu</a></li>
+                </ul>
             </div>
         </div>
-
-        <div class="row">
-            <div class="input-field col s12">
-                <input id="height" type="number" class="validate"
-                       name="Height" >
-                <label for="height" data-error="wrong"
-                       data-success="right">Height</label>
-            </div>
-        </div>
-        <div class="row">
-            <div class="input-field col s12">
-                <input id="city" type="text" class="validate"
-                       name="City" >
-                <label for="city" data-error="wrong"
-                       data-success="right">City</label>
-            </div>
-        </div>
-        <div class="row">
-            <div class="input-field col s12">
-                <input id="country" type="text" class="validate"
-                       name="Country" >
-                <label for="country" data-error="wrong"
-                       data-success="right">Country</label>
-            </div>
-        </div>
-        <div class="row">
-            <div class="input-field col s12">
-                <input id="street" type="text" class="validate"
-                       name="Street" >
-                <label for="street" data-error="wrong"
-                       data-success="right">Street</label>
-            </div>
-        </div>
-        <button class="btn waves-effect waves-light" type="submit"
-                >Submit
-            <i class="mdi-content-send right"></i>
-        </button>
-    </form>
+    </div>
+    <div class="row">
+        <div class="preview-container"></div>
+    </div>
 </div>
+{{template "snippets/profile_pic_upload" .}}
+{{end}}
