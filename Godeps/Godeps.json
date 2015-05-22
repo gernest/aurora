@@ -54,6 +54,10 @@
 			"Rev": "699a88f33605865928ccd8cdd39bbce80fb1aaef"
 		},
 		{
+			"ImportPath": "github.com/muesli/cache2go",
+			"Rev": "ffb895e2c938960228f4522bdefe021c07d528f0"
+		},
+		{
 			"ImportPath": "github.com/nu7hatch/gouuid",
 			"Rev": "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
 		},
@@ -66,6 +70,11 @@
 			"ImportPath": "golang.org/x/crypto/blowfish",
 			"Comment": "null-236",
 			"Rev": "69e2a90ed92d03812364aeb947b7068dc42e561e"
+		},
+		{
+			"ImportPath": "golang.org/x/net/websocket",
+			"Comment": "null-240",
+			"Rev": "937a34c9de13c766c814510f76bca091dee06028"
 		}
 	]
 }

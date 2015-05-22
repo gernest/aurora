@@ -69,7 +69,6 @@ func TestGetUser(t *testing.T) {
 	}
 }
 func TestGetAll(t *testing.T) {
-	t.Parallel()
 	var (
 		bucket = "get_all"
 		db     = nutz.NewStorage("fixture/test_auth_get_all.ddb", 0600, nil)

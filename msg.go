@@ -96,30 +96,27 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 		switch data := msg.GetData().(type) {
 		case *MSG:
 			if p != nil {
-				if p.ID != data.SenderID {
-					data.Status = http.StatusBadRequest
-					msg.SetEvent(alertSendFailed)
-					msg.SetData(data)
-					return msg
-				}
-				data.SentAt = time.Now()
-				err := m.saveMsg(outboxBucket, p.ID, data)
-				if err != nil {
-					data.Status = http.StatusInternalServerError
-					return setMSG(alertSendFailed, data, msg)
-				}
-				if m.isOnline(data.RecipientID) {
-					m.rm.Emit(data.RecipientID, receiveEvt, data)
+				if p.ID == data.SenderID {
+					data.SentAt = time.Now()
+					err := m.saveMsg(outboxBucket, p.ID, data)
+					if err != nil {
+						data.Status = http.StatusInternalServerError
+						return setMSG(alertSendFailed, data, msg)
+					}
+					if m.isOnline(data.RecipientID) {
+						m.rm.Emit(data.RecipientID, receiveEvt, data)
+						data.Status = http.StatusOK
+						return setMSG(alertSendSuccess, data, msg)
+					}
+					err = m.saveMsg(inboxBucket, data.RecipientID, data)
+					if err != nil {
+						data.Status = http.StatusInternalServerError
+						return setMSG(alertSendFailed, data, msg)
+					}
 					data.Status = http.StatusOK
 					return setMSG(alertSendSuccess, data, msg)
 				}
-				err = m.saveMsg(inboxBucket, data.RecipientID, data)
-				if err != nil {
-					data.Status = http.StatusInternalServerError
-					return setMSG(alertSendFailed, data, msg)
-				}
-				data.Status = http.StatusOK
-				return setMSG(alertSendSuccess, data, msg)
+
 			}
 		}
 	case receiveEvt:
@@ -228,6 +225,7 @@ func (m *Messenger) send(conn *golem.Connection, msg *MSG) {
 
 func (m *Messenger) onClose(conn *golem.Connection) {
 	m.online.Delete(conn.UserID)
+	m.rm.Leave(conn.UserID, conn)
 }
 
 func (m *Messenger) isOnline(key string) bool {

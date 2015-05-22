@@ -56,7 +56,7 @@ func TestMessenger(t *testing.T) {
 	p := &Profile{ID: usr.UUID}
 	err = CreateProfile(pdb, p, rx.cfg.ProfilesBucket)
 	if err != nil {
-		t.Error(err)
+		t.Errorf("creating profile: %v", err)
 	}
 
 	// There is no session yet, it should fail to validate
@@ -98,7 +98,6 @@ func TestMessenger(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer ws2.Close()
 
 	// try sending a bad request
 	tmsg := &MSG{
@@ -139,6 +138,7 @@ func TestMessenger(t *testing.T) {
 	if !contains(string(dmsg), tmsg.Text) {
 		t.Errorf("Expected %s to contain %s", string(rst), tmsg.Text)
 	}
+	ws2.Close()
 }
 
 func marshalAndPach(name string, dPtr interface{}) ([]byte, error) {
