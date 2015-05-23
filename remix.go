@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -399,6 +400,7 @@ func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if p.ID == id {
+				log.Println("setting myProfile")
 				data.Add("myProfile", true)
 			}
 			data.Add("profile", p)

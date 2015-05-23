@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/gernest/nutz"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"testing"
+
+	"github.com/gernest/nutz"
 )
 
 func TestGetFileUpload(t *testing.T) {
@@ -211,9 +212,9 @@ func requestWithFile(fileName string) (*http.Request, error) {
 
 func requestMuliFile(fileName string, t *testing.T) *http.Request {
 	var (
-		kind        = "multi"
-		testURL     = "http://bogus.com"
-		cType       = "Content-Type"
+		kind    = "multi"
+		testURL = "http://bogus.com"
+		cType   = "Content-Type"
 	)
 	content, contentType := testUpData(fileName, kind, t)
 	req, err := http.NewRequest("POST", testURL, content)
