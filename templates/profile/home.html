@@ -5,22 +5,27 @@
             <div class="col s12">
                 <div class="container" id="my-pic">
                     <img src="/static/img/boob.jpg" alt="" class="responsive-img">
+                    {{if .myProfile}}
                     <a class="btn blue waves-effect waves-light" pid="{{.ID}}" id="profile-pic"> Badili picha</a>
+                    {{end}}
                 </div>
             </div>
             <div class="col s12">
                 {{template "snippets/profile_info" .}}
             </div>
         </div>
+        {{if .myProfile}}
         <div class="row">
             <div class=" col s12">
                 {{template "snippets/profile_update_form" .}}
             </div>
             <div id="preview-many" class="row"></div>
         </div>
-
+        {{end}}
     </div>
 </main>
+{{if .myProfile}}
 <script src="/static/js/dropzone.js"></script>
 <script src="/static/js/profile.js"></script>
+{{end}]
 {{template "base/footer" .}}

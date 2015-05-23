@@ -10,7 +10,10 @@ import (
 	"github.com/bluele/gforms"
 )
 
-const ageLimit int = 18
+const (
+	ageLimit        int    = 18
+	birthDateFormat string = "02 Jan 2006"
+)
 
 var (
 	// MsgRequired is the error message for required validation.
@@ -180,15 +183,23 @@ func ComposeLoginForm() gforms.ModelForm {
 // ComposeProfileForm builds a profile form for validation (using gform)
 func ComposeProfileForm() gforms.ModelForm {
 	return gforms.DefineModelForm(Profile{}, gforms.NewFields(
-		gforms.NewIntegerField(
-			"age",
+		gforms.NewTextField(
+			"first_name",
 			gforms.Validators{
-				gforms.MinValueValidator(ageLimit, MsgMinAge),
+				gforms.Required(MsgRequired),
+				IsName(),
+			},
+		),
+		gforms.NewTextField(
+			"last_name",
+			gforms.Validators{
+				gforms.Required(MsgRequired),
+				IsName(),
 			},
 		),
 		gforms.NewDateTimeField(
 			"birth_date",
-			time.RFC822,
+			birthDateFormat,
 			gforms.Validators{
 				gforms.Required(MsgRequired),
 				BirthDateValidator{Limit: ageLimit, Message: MsgMinAge},

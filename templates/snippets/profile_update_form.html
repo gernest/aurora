@@ -2,49 +2,49 @@
 <div class="container">
     <h4 class="pavement center-align ">badili habari zangu</h4>
     <div class="row">
-        <form class="col s12">
+        <form class="col s12" action="/profile??u=true&id={{.ID}}" method="post">
             <div class="row">
                 <div class="input-field col s6">
-                    <input placeholder="Placeholder" id="first_name" type="text" class="validate">
-                    <label for="first_name">jina la kwanza</label>
+                    <input name="first_name" placeholder="aurora" id="first-name" type="text" class="validate">
+                    <label for="first-name">jina la kwanza</label>
                 </div>
                 <div class="input-field col s6">
-                    <input id="last_name" type="text" class="validate">
+                    <input name="last_name" id="last_name" type="text" class="validate">
                     <label for="last_name">jina la mwisho</label>
                 </div>
             </div>
             <div class="row">
                 <div class="input-field col s12">
-                    <input id="password" type="password" class="validate">
-                    <label for="password">tarehe ya kuzaliwa</label>
+                    <input name="birth_date" id="birth-date" type="text" >
+                    <label for="birth-date">tarehe ya kuzaliwa</label>
                 </div>
             </div>
             <div class="row">
                 <div class="input-field col s12">
-                    <select class="browser-default">
+                    <select name="gender" class="browser-default">
                         <option value="" >Chagua jinsia</option>
-                        <option value="1">mwanaume</option>
-                        <option value="2">mwanamke</option>
-                        <option value="3">zombie</option>
+                        <option value="male">mwanaume</option>
+                        <option value="female">mwanamke</option>
+                        <option value="zombie">zombie</option>
                     </select>
                 </div>
             </div>
             <div class="row">
                 <div class="input-field col s12">
-                    <input id="password" type="password" class="validate">
-                    <label for="password">jiji</label>
+                    <input name="city" id="city" type="password" class="validate">
+                    <label for="city">jiji</label>
                 </div>
             </div>
             <div class="row">
                 <div class="input-field col s12">
-                    <input id="password" type="password" class="validate">
-                    <label for="password">Nchi</label>
+                    <input name="country" id="country" type="password" class="validate">
+                    <label for="country">Nchi</label>
                 </div>
             </div>
             <div class="row">
                 <div class="input-field col s12">
-                    <input id="password" type="password" class="validate">
-                    <label for="password">Mtaa</label>
+                    <input name="street" id="street" type="password" class="validate">
+                    <label for="street">Mtaa</label>
                 </div>
             </div>
             <button class="btn waves-effect waves-light" type="submit" name="action">Tuma

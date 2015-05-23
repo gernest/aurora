@@ -112,6 +112,7 @@ func (rx *Remix) Home(w http.ResponseWriter, r *http.Request) {
 		data.Add("people", people)
 	}
 	rx.rendr.HTML(w, http.StatusOK, "home", data)
+	return
 }
 
 // Register creates a new user account
@@ -395,6 +396,10 @@ func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 				data.Add("error", errNotFound)
 				rx.rendr.HTML(w, http.StatusNotFound, "404", data)
 				return
+			}
+
+			if p.ID == id {
+				data.Add("myProfile", true)
 			}
 			data.Add("profile", p)
 			rx.rendr.HTML(w, http.StatusOK, profileHome, data)

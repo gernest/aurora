@@ -6,9 +6,7 @@ init_cmds = [
 watch_all = true		# Watch all sub-directories
 watch_dirs = [
 	"$WORKDIR/bin",
-	"$WORKDIR/cmd",
-	"$WORKDIR/public",
-	"$WORKDIR/templates"
+	"$WORKDIR/cmd"
 ]
 watch_exts = [".go",".html",".js",".css"]
 build_delay = 1500		# Minimal interval to Trigger build event
