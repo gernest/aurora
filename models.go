@@ -2,6 +2,12 @@ package aurora
 
 import "time"
 
+const (
+	male   = iota + 1 // 1
+	female            // 2
+	zombie            // 3
+)
+
 // Account is an interface for a user account
 type Account interface {
 	Email() string
@@ -44,10 +50,31 @@ type Profile struct {
 	Age       int       `json:"age" gforms:"age"`
 	IsUpdate  bool      `json:"is_update" gforms:"-"`
 	BirthDate time.Time `json:"birth_date" gforms:"birth_date"`
+	Gender    int       `json:"gender" gforms:"gender"`
 	Photos    []*Photo  `json:"photos" gforms:"-"`
 	City      string    `json:"city" gforms:"city"`
 	Country   string    `json:"country" gforms:"country"`
 	Street    string    `json:"street" gforms:"street"`
 	CreatedAt time.Time `json:"created_at" gforms:"-"`
 	UpdatedAt time.Time `json:"update_at" gforms:"-"`
+}
+
+func (p *Profile) MyBirthDay() string {
+	t := time.Time{}
+	if p.BirthDate.String() == t.String() {
+		return time.Now().Format(birthDateFormat)
+	}
+	return p.BirthDate.Format(birthDateFormat)
+}
+
+func (p *Profile) Sex() string {
+	switch p.Gender {
+	case male:
+		return "Mwanaume"
+	case female:
+		return "Mwanamke"
+	case zombie:
+		return "undead"
+	}
+	return ""
 }

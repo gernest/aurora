@@ -12,7 +12,7 @@ import (
 
 const (
 	ageLimit        int    = 18
-	birthDateFormat string = "02 Jan 2006"
+	birthDateFormat string = "2 January, 2006"
 )
 
 var (
@@ -143,11 +143,23 @@ type BirthDateValidator struct {
 // Validate checks if the given field instance esceeds the Limit attribute
 func (vl BirthDateValidator) Validate(fi *gforms.FieldInstance, fo *gforms.FormInstance) error {
 	v := fi.V
+	now := time.Now()
+
 	if v.IsNil {
 		return nil
 	}
+	if v.Kind == reflect.String {
+		iv := v.Value.(string)
+		born, err := time.Parse(birthDateFormat, iv)
+		if err != nil {
+			return err
+		}
+		if now.Year()-born.Year() < vl.Limit {
+			return fmt.Errorf(vl.Message, vl.Limit)
+		}
+		return nil
+	}
 	iv := v.Value.(time.Time)
-	now := time.Now()
 	if now.Year()-iv.Year() < vl.Limit {
 		return fmt.Errorf(vl.Message, vl.Limit)
 	}
@@ -186,14 +198,12 @@ func ComposeProfileForm() gforms.ModelForm {
 		gforms.NewTextField(
 			"first_name",
 			gforms.Validators{
-				gforms.Required(MsgRequired),
 				IsName(),
 			},
 		),
 		gforms.NewTextField(
 			"last_name",
 			gforms.Validators{
-				gforms.Required(MsgRequired),
 				IsName(),
 			},
 		),
@@ -201,7 +211,6 @@ func ComposeProfileForm() gforms.ModelForm {
 			"birth_date",
 			birthDateFormat,
 			gforms.Validators{
-				gforms.Required(MsgRequired),
 				BirthDateValidator{Limit: ageLimit, Message: MsgMinAge},
 			},
 		),

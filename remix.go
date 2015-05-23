@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -378,7 +377,6 @@ func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 		flash       *Flash
 		ss          *sessions.Session
 	)
-
 	pdb := getProfileDatabase(rx.cfg.DBDir, id, rx.cfg.DBExtension)
 	if r.Method == "GET" {
 		if id != "" && view == "true" && all != "true" {
@@ -398,10 +396,14 @@ func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 				rx.rendr.HTML(w, http.StatusNotFound, "404", data)
 				return
 			}
-
-			if p.ID == id {
-				log.Println("setting myProfile")
-				data.Add("myProfile", true)
+			if ss, ok := rx.isInSession(r); ok {
+				_, cp, err := rx.getCurrentUserAndProfile(ss)
+				if err != nil {
+					// log this?
+				}
+				if cp.ID == p.ID {
+					data.Add("myProfile", true)
+				}
 			}
 			data.Add("profile", p)
 			rx.rendr.HTML(w, http.StatusOK, profileHome, data)
@@ -444,7 +446,6 @@ func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 					data.Add("error", errInternalServer.Error())
 					rx.rendr.HTML(w, http.StatusInternalServerError, "500", data)
 					return
-
 				}
 				if p.ID != id {
 					if rx.isAjax(r) {
@@ -460,18 +461,14 @@ func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 						rx.rendr.JSON(w, http.StatusOK, &jsonErr{errBadForm.Error()})
 						return
 					}
-					data.Add("error", errBadForm.Error())
+					data.Add("error", form.Errors())
 					data.Add("profile", p)
+					data.Add("myProfile", true)
 					rx.rendr.HTML(w, http.StatusOK, profileHome, data)
 					return
 				}
 				prof := form.GetModel().(Profile)
-				p.BirthDate = prof.BirthDate
-				p.Age = setAge(prof.BirthDate)
-				p.City = prof.City
-				p.Country = prof.Country
-				p.Street = prof.Street
-				p.UpdatedAt = time.Now()
+				p = makeProfUptodate(p, prof)
 				err = UpdateProfile(setDB(rx.db, pdb), p, rx.cfg.ProfilesBucket)
 				if err != nil {
 					if rx.isAjax(r) {
@@ -629,4 +626,32 @@ func setConfigData(c *RemixConfig) render.TemplateData {
 // checks if the request is ajax
 func (rx *Remix) isAjax(r *http.Request) bool {
 	return r.Header.Get("X-Requested-With") == "XMLHttpRequest"
+}
+
+func makeProfUptodate(des *Profile, src Profile) *Profile {
+	if src.FirstName != "" {
+		des.FirstName = strings.ToTitle(src.FirstName)
+	}
+	if src.LastName != "" {
+		des.LastName = strings.ToTitle(src.LastName)
+	}
+	t := time.Time{}
+	if src.BirthDate != t {
+		des.Age = setAge(src.BirthDate)
+		des.BirthDate = src.BirthDate
+	}
+	if src.City != "" {
+		des.City = src.City
+	}
+	if src.Street != "" {
+		des.Street = src.Street
+	}
+	if src.Country != "" {
+		des.Country = src.Country
+	}
+	if src.Gender > 0 {
+		des.Gender = src.Gender
+	}
+	des.UpdatedAt = time.Now()
+	return des
 }
