@@ -46,6 +46,7 @@ func (a *AuroraCLI) Setup() {
 		a.log(fmt.Sprintf("%s \n", out))
 	}
 	a.log("done")
+
 	a.log("==>checking directories")
 	bd := path.Join(a.cfg.WorkingDir, path.Join(a.cfg.Dest, a.cfg.Version))
 	a.logErr(os.MkdirAll(bd, 0700))
