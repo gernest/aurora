@@ -36,6 +36,8 @@ $(document).ready(function(){
         previewsContainer: ".preview-container"
 
     });
-    $('#birth-date').pickadate();
-
+    $('#birth-date').pickadate({
+        selectYears:true,
+        selectMonths:true
+    });
 });
