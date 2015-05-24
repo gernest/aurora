@@ -57,10 +57,14 @@ func (l listErr) Error() string {
 	var rst string
 	for i, e := range l {
 		if i == 0 {
-			rst = e.Error()
+			if e != nil {
+				rst = e.Error()
+			}
 			continue
 		}
-		rst = rst + ", " + e.Error()
+		if e != nil {
+			rst = rst + ", " + e.Error()
+		}
 	}
 	return rst
 }

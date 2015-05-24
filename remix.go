@@ -327,13 +327,15 @@ func (rx *Remix) Uploads(w http.ResponseWriter, r *http.Request) {
 				}
 				rst = append(rst, pic)
 			}
-			errs = append(errs, ferr)
+			if ferr != nil {
+				errs = append(errs, ferr)
+			}
 			if len(rst) == 0 && len(errs) > 0 {
-				jr := &jsonUploads{Error: err.Error()}
+				jr := &jsonUploads{Error: errs.Error()}
 				rx.rendr.JSON(w, http.StatusInternalServerError, jr)
 				return
 			}
-			profile.Photos = rst
+			profile.Photos = append(profile.Photos, rst...)
 			err = UpdateProfile(pdb, profile, rx.cfg.ProfilesBucket)
 			if err != nil {
 				jr := &jsonUploads{Error: err.Error()}

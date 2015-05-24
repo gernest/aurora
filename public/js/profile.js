@@ -27,15 +27,26 @@ $(document).ready(function(){
         $('#profile-picture').attr('src',src);
         console.log(data);
     });
-    var dzGallery=$('#gallery-upload').dropzone({
+    var gz =new Dropzone('#gallery-upload',{
         url: "/uploads", // Set the url
-        autoQueue: false,
+        autoQueue: true,
         paramName: "photos",
         previewTemplate: tmpl.html(),
         clickable: "#pandisha-kibao",
         previewsContainer: ".preview-container"
-
     });
+    gz.on('complete',function(file){
+        gz.removeAllFiles(true);
+    });
+    gz.on('success',function(file,data){
+        console.log(data);
+    });
+    gz.on("error",function(file,msg){
+        console.log(msg);
+    });
+
+
+    // birth date field
     $('#birth-date').pickadate({
         selectYears:true,
         selectMonths:true

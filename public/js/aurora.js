@@ -5,5 +5,7 @@
 $(document).ready(function(){
     // paralax
     $('.parallax').parallax();
-
+    $('.collapsible').collapsible({
+        accordion : false
+    });
 });

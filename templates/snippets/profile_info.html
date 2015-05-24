@@ -29,13 +29,45 @@
                     <span class="title">Mtaa</span>
                     <h5>{{.Street}}</h5>
                 </li>
-                <li class="collection-item">
-                    <div>Angalia picha zangu
-                        <a href="/galery?id={{.ID}}" class="secondary-content btn waves-effect waves-light"><i class="mdi-content-send"></i></a>
-                    </div></li>
-                <li class="collection-item">
-                    <div>Karibu tuongee
-                        <a href="/chatroom?room={{.ID}}" class="secondary-content btn waves-effect waves-light"><i class="mdi-content-send"></i></a>
+            </ul>
+
+            <ul class="collapsible" data-collapsible="accordion">
+                <li>
+                    <div class="collapsible-header"><i class="mdi-image-exposure"></i>angalia picha zangu</div>
+                    <div class="collapsible-body">
+                        {{with .Photos}}
+                        <div class="container">
+                            {{range .}}
+                            <img src="/imgs?iid={{.ID}}&pid={{.UploadedBy}}" alt="" class="responsive-img" id="profile-picture">
+                            {{end}}
+                        </div>
+                        {{else}}
+                        <p>hakuna picha yoyote</p>
+                        {{end}}
+                    </div>
+                </li>
+                <li>
+                    <div class="collapsible-header"><i class="mdi-communication-chat"></i>nitumie ujumbe</div>
+                    <div class="collapsible-body">
+                        <div class="container">
+                            <form>
+                                <div class="row">
+                                    <form class="col s12">
+                                        <div class="row">
+                                            <div class="input-field col s12">
+                                                <textarea id="textarea1" class="materialize-textarea"></textarea>
+                                                <label for="textarea1">Andika ujumbe wako hapa</label>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="container">
+                                                <button class="btn block">tuma</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </li>
             </ul>
