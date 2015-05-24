@@ -104,11 +104,16 @@ func NewRemix(cfg *RemixConfig) *Remix {
 // Home is where the homepage is
 func (rx *Remix) Home(w http.ResponseWriter, r *http.Request) {
 	data := rx.setSessionData(r)
-	if _, ok := rx.isInSession(r); ok {
+	if ss, ok := rx.isInSession(r); ok {
 		people, err := rx.getAllProfiles()
 		if err != nil {
 			// log this?
 		}
+		_, cp, err := rx.getCurrentUserAndProfile(ss)
+		if err != nil {
+			// log this?
+		}
+		data.Add("profile", cp)
 		data.Add("people", people)
 	}
 	rx.rendr.HTML(w, http.StatusOK, "home", data)

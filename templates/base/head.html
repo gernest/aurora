@@ -36,11 +36,10 @@
             <a href="#" data-activates="mobile-demo" class="button-collapse"><i
                     class="mdi-navigation-menu"></i></a>
             <ul class="right hide-on-med-and-down">
-                <li><a href="#">report</a></li>
-                <li><a href="/profile/{{.user.ID}}">
-                    <span>{{.user.FirstName}}</span>
-                    <span>{{.user.LastName}}</span></a></li>
-                <li><a href="/auth/logout">logout</a></li>
+                <li><a href="/profile?view=true&id={{.profile.ID}}&all=false">
+                    <span>{{.profile.FirstName}}</span>
+                    <span>{{.profile.LastName}}</span></a></li>
+                <li><a href="/auth/logout">jitoe</a></li>
             </ul>
             <ul class="side-nav indigo lighte" id="mobile-demo">
                 <form>
@@ -51,10 +50,10 @@
                         <i class="mdi-navigation-close"></i>
                     </div>
                 </form>
-                <li><a href="/profile/{{.user.ID}}">
-                    <span>{{.user.FirstName}}</span>
-                    <span>{{.user.LastName}}</span></a></li>
-                <li><a href="/auth/logout">logout</a></li>
+                <li><a href="/profile?view=true&id={{.profile.ID}}&all=false">
+                    <span>{{.profile.FirstName}}</span>
+                    <span>{{.profile.LastName}}</span></a></li>
+                <li><a href="/auth/logout">jitoe</a></li>
             </ul>
         </div>
         {{else}}
@@ -63,19 +62,19 @@
             <a href="#" data-activates="mobile-demo" class="button-collapse"><i
                     class="mdi-navigation-menu"></i></a>
             <ul class="right hide-on-med-and-down">
-                <li><a href="#">report</a></li>
-                <li><a href="/auth/login">login</a></li>
-                <li><a href="/auth/register">register</a></li>
+                <li><a href="/auth/login">ingia</a></li>
+                <li><a href="/auth/register">jiunge</a></li>
             </ul>
-            <ul class="side-nav" id="mobile-demo">
-                <li><a href="#">report</a></li>
-                <li><a href="/auth/login">login</a></li>
-                <li><a href="/auth/register">register</a></li>
+            <ul class="side-nav">
+                <li><a href="/auth/login">ingia</a></li>
+                <li><a href="/auth/register">jiunge</a></li>
             </ul>
         </div>
+
         {{end}}
     </nav>
 </header>
+{{if .InSession}}
 <div class="container">
     <div class="row">
         <div class="col s12">
@@ -85,3 +84,8 @@
         </div>
     </div>
 </div>
+{{else}}
+<div class="parallax-container">
+    <div class="parallax"><img src="/static/img/sky.jpeg"></div>
+</div>
+{{end}}

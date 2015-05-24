@@ -26,7 +26,7 @@ func TestRemix_Home(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = checkResponse(res, http.StatusOK, "prove it yourself")
+	err = checkResponse(res, http.StatusOK, "pitch")
 	if err != nil {
 		t.Error(err)
 	}
