@@ -35,29 +35,26 @@ type BuildConfig struct {
 }
 
 func NewCLI() *AuroraCLI {
-	return &AuroraCLI{verbose: false, o: log.New(os.Stdout, "", log.Lshortfile)}
+	return &AuroraCLI{verbose: false, o: log.New(os.Stdout, "", log.Ltime)}
 }
 
 func (a *AuroraCLI) Setup() {
-	a.log("==>geting dependencies")
+	a.log("===SETUP")
 	out, err := exec.Command("go", "get", "-v").Output()
 	a.logErr(err)
 	if len(out) > 0 {
 		a.log(fmt.Sprintf("%s \n", out))
 	}
-	a.log("done")
-
-	a.log("==>checking directories")
 	bd := path.Join(a.cfg.WorkingDir, path.Join(a.cfg.Dest, a.cfg.Version))
 	a.logErr(os.MkdirAll(bd, 0700))
 	a.buildDir = bd
 	a.clean()
-	a.log("done")
+	a.log("---DONE")
 }
 func (a *AuroraCLI) RunTests() {
-	a.log("==>running tests")
+	a.log("===TESTING")
 	if a.verbose {
-		out, err := exec.Command("go", "test", "-v").Output()
+		out, err := exec.Command("godep", "go", "test", "-v").Output()
 		a.logErr(err)
 		if len(out) > 0 {
 			a.log(fmt.Sprintf("%s", out))
@@ -69,10 +66,10 @@ func (a *AuroraCLI) RunTests() {
 			a.log(fmt.Sprintf("%s", out))
 		}
 	}
-	a.log("done")
+	a.log("---DONE")
 }
 func (a *AuroraCLI) CreateBinary() {
-	a.log("==>Creating executable")
+	a.log("===CREATING BINARY")
 	o := filepath.Join(a.cfg.Dest, filepath.Join(a.cfg.Version, a.cfg.AppName))
 	src := filepath.Join(a.cfg.Src, a.cfg.AppName+".go")
 	out, err := exec.Command("go", "build", "-o", o, "-v", src).Output()
@@ -80,9 +77,10 @@ func (a *AuroraCLI) CreateBinary() {
 	if len(out) > 0 {
 		a.log(fmt.Sprintf("%s", out))
 	}
-	a.log("done")
+	a.log("---DONE")
 }
 func (a *AuroraCLI) Assemble() {
+	a.log("===ASSEMBLING")
 	// copy public folder
 	a.logErr(a.copyDir(a.cfg.Public, path.Join(a.buildDir, a.cfg.Public)))
 
@@ -92,9 +90,12 @@ func (a *AuroraCLI) Assemble() {
 	// copy application configurations
 	appCfg := path.Join(a.buildDir, path.Join(a.cfg.ConfigDir, "app"))
 	a.logErr(a.copyDir(path.Join(a.cfg.ConfigDir, "app"), appCfg))
+	a.log("---DONE")
 
 }
 func (a *AuroraCLI) SetupDatabase() {
+	a.log("===SETUP DATABASE")
+
 	// create database directory
 	if a.cfg.DBDIr == "" {
 		a.logErr(os.MkdirAll(path.Join(a.buildDir, "db"), 0700))
@@ -103,6 +104,7 @@ func (a *AuroraCLI) SetupDatabase() {
 	} else {
 		a.logErr(os.MkdirAll(path.Join(a.buildDir, a.cfg.DBDIr), 0700))
 	}
+	a.log("---DONE")
 }
 func (a *AuroraCLI) Build() {
 	// load configuration file
@@ -122,9 +124,11 @@ func (a *AuroraCLI) Build() {
 
 	// setup database
 	a.SetupDatabase()
+
+	a.log("[SUCCESS] build complete.")
 }
 func (a *AuroraCLI) loadConfig() error {
-	a.log("==>loading configuration")
+	a.log("===CONFIGURING BUILD")
 	cfg := new(BuildConfig)
 	pwd, err := os.Getwd()
 	if err != nil {
@@ -141,7 +145,7 @@ func (a *AuroraCLI) loadConfig() error {
 	}
 	cfg.WorkingDir = pwd
 	a.cfg = cfg
-	a.log("done")
+	a.log("---DONE")
 	return nil
 }
 
@@ -227,8 +231,9 @@ func (a *AuroraCLI) copyFile(source string, dest string) (err error) {
 	return
 }
 func (a *AuroraCLI) clean() {
-	a.log("cleaning build dir")
+	a.log("===CLEANING")
 	a.logErr(os.RemoveAll(a.buildDir))
+	a.log("---DONE")
 }
 func main() {
 	v := flag.Bool("v", false, "logs build messages on stdout")
