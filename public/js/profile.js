@@ -4,17 +4,31 @@
 
 $(document).ready(function(){
     var tmpl=$('#profile-pic-upload');
-    var dz=$('#my-pic').dropzone({
+    var dz=new Dropzone('#my-pic',{
         url: "/uploads", // Set the url
         autoQueue: true,
-        autoQueue: false,
         paramName: "profile",
         previewTemplate: tmpl.html(),
-        clickable: "#profile-pic"
+        clickable: "#profile-pic",
+        addRemoveLinks:true,
+        maxFilesize:2,
+        mazThumnailFileSize:2,
+        thumbnailWidth:120,
+        thumbnailHeigh:120,
+        maxFiles:1,
+        acceptedFiles:"image/jpg,image/png,image/jpeg",
+        previewsContainer: "#pic-preview"
+    });
+    dz.on('complete',function(file){
+        dz.removeFile(file);
+    });
+    dz.on('success',function(file,data){
+        src='/imgs?'+data.query
+        $('#profile-picture').attr('src',src);
+        console.log(data);
     });
     var dzGallery=$('#gallery-upload').dropzone({
         url: "/uploads", // Set the url
-        autoQueue: true,
         autoQueue: false,
         paramName: "photos",
         previewTemplate: tmpl.html(),

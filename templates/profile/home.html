@@ -4,9 +4,14 @@
         <div class="row">
             <div class="col s12">
                 <div class="container" id="my-pic">
-                    <img src="/static/img/boob.jpg" alt="" class="responsive-img">
+                    {{ with .profile.Picture }}
+                    <img src="/imgs?iid={{.ID}}&pid={{.UploadedBy}}" alt="" class="responsive-img" id="profile-picture">
+                    {{else}}
+                    <img src="/static/img/sky.jpeg" alt="" class="responsive-img" id="profile-picture">
+                    {{end}}
                     {{if .myProfile}}
                     <a class="btn blue waves-effect waves-light" pid="{{.ID}}" id="profile-pic"> Badili picha</a>
+                    <div id="pic-preview"></div>
                     {{end}}
                 </div>
             </div>
