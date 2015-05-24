@@ -33,7 +33,7 @@
         {{if .InSession}}
         <div class="nav-wrapper">
             <a href="/" class="brand-logo center">{{.AppName}}</a>
-            <a href="#" data-activates="mobile-demo" class="button-collapse"><i
+            <a href="#" data-activates="mobile-nav" class="button-collapse"><i
                     class="mdi-navigation-menu"></i></a>
             <ul class="right hide-on-med-and-down">
                 <li><a href="/profile?view=true&id={{.profile.ID}}&all=false">
@@ -41,20 +41,28 @@
                     <span>{{.profile.LastName}}</span></a></li>
                 <li><a href="/auth/logout">jitoe</a></li>
             </ul>
-            <ul class="side-nav indigo lighte" id="mobile-demo">
-                <form>
-                    <div class="input-field">
-                        <input id="search" type="search" required>
-                        <label for="search"><i
-                                class="mdi-action-search"></i></label>
-                        <i class="mdi-navigation-close"></i>
-                    </div>
-                </form>
-                <li><a href="/profile?view=true&id={{.profile.ID}}&all=false">
-                    <span>{{.profile.FirstName}}</span>
-                    <span>{{.profile.LastName}}</span></a></li>
-                <li><a href="/auth/logout">jitoe</a></li>
-            </ul>
+            <div class="side-nav" id="mobile-nav">
+                <ul class="">
+                    <li>
+                        <a href="#">
+                            <i class="mdi-navigation-menu left" ></i>aurora
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/profile?view=true&id={{.profile.ID}}&all=false">
+                            <i class="mdi-social-person left"></i>
+                            <span>{{.profile.FirstName}}</span>
+                            <span>{{.profile.LastName}}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/auth/logout">
+                            jitoe
+                        </a>
+                    </li>
+                </ul>
+
+            </div>
         </div>
         {{else}}
         <div class="nav-wrapper">

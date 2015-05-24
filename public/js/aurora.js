@@ -8,4 +8,6 @@ $(document).ready(function(){
     $('.collapsible').collapsible({
         accordion : false
     });
+    $('.materialboxed').materialbox();
+    $(".button-collapse").sideNav();
 });
