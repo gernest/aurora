@@ -1,3 +1,4 @@
+{{$u:=.user}}
 {{ with .profile }}
 <div class="container">
     <div class="row">
@@ -50,18 +51,21 @@
                     <div class="collapsible-header"><i class="mdi-communication-chat"></i>nitumie ujumbe</div>
                     <div class="collapsible-body">
                         <div class="container">
-                            <form>
+                            <form id="msg">
                                 <div class="row">
-                                    <form class="col s12">
+                                    <div class="progress hide">
+                                        <div class="indeterminate"></div>
+                                    </div>
+                                    <form class="col s12" id="msg">
                                         <div class="row">
                                             <div class="input-field col s12">
-                                                <textarea id="textarea1" class="materialize-textarea"></textarea>
-                                                <label for="textarea1">Andika ujumbe wako hapa</label>
+                                                <textarea id="msg-text" class="materialize-textarea"></textarea>
+                                                <label for="msg-text">Andika ujumbe wako hapa</label>
                                             </div>
                                         </div>
                                         <div class="row">
                                             <div class="container">
-                                                <button class="btn block">tuma</button>
+                                                <button class="btn block msg-send" msg-r="{{.ID}}" msg-s="{{$u.ID}}">tuma</button>
                                             </div>
                                         </div>
                                     </form>

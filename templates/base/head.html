@@ -36,9 +36,15 @@
             <a href="#" data-activates="mobile-nav" class="button-collapse"><i
                     class="mdi-navigation-menu"></i></a>
             <ul class="right hide-on-med-and-down">
-                <li><a href="/profile?view=true&id={{.profile.ID}}&all=false">
-                    <span>{{.profile.FirstName}}</span>
-                    <span>{{.profile.LastName}}</span></a></li>
+                <li>
+                    <a href="#">
+                        <i class="mdi-notification-sms left"></i>
+                        <span id="alert">0</span>
+                    </a>
+                </li>
+                <li><a href="/profile?view=true&id={{.user.ID}}&all=false">
+                    <span>{{.user.FirstName}}</span>
+                    <span>{{.user.LastName}}</span></a></li>
                 <li><a href="/auth/logout">jitoe</a></li>
             </ul>
             <div class="side-nav" id="mobile-nav">
@@ -64,10 +70,10 @@
                         </a>
                     </li>
                     <li>
-                        <a href="/profile?view=true&id={{.profile.ID}}&all=false">
+                        <a href="/profile?view=true&id={{.user.ID}}&all=false">
                             <i class="mdi-social-person left"></i>
-                            <span>{{.profile.FirstName}}</span>
-                            <span>{{.profile.LastName}}</span>
+                            <span>{{.user.FirstName}}</span>
+                            <span>{{.user.LastName}}</span>
                         </a>
                     </li>
                     <li>

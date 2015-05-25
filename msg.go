@@ -97,6 +97,7 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 		case *MSG:
 			if p != nil {
 				if p.ID == data.SenderID {
+
 					data.SentAt = time.Now()
 					err := m.saveMsg(outboxBucket, p.ID, data)
 					if err != nil {

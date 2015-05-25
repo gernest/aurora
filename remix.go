@@ -113,7 +113,7 @@ func (rx *Remix) Home(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			// log this?
 		}
-		data.Add("profile", cp)
+		data.Add("user", cp)
 		data.Add("people", people)
 	}
 	rx.rendr.HTML(w, http.StatusOK, "home", data)
@@ -387,27 +387,28 @@ func (rx *Remix) Profile(w http.ResponseWriter, r *http.Request) {
 	pdb := getProfileDatabase(rx.cfg.DBDir, id, rx.cfg.DBExtension)
 	if r.Method == "GET" {
 		if id != "" && view == "true" && all != "true" {
-			if rx.isAjax(r) {
-				p, err := GetProfile(setDB(rx.db, pdb), rx.cfg.ProfilesBucket, id)
-				if err != nil {
-					// TODO: log this err
-					rx.rendr.JSON(w, http.StatusNotFound, &jsonErr{errNotFound.Error()})
-					return
-				}
-				rx.rendr.JSON(w, http.StatusOK, p)
-				return
-			}
 			p, err := GetProfile(setDB(rx.db, pdb), rx.cfg.ProfilesBucket, id)
 			if err != nil {
+				if rx.isAjax(r) {
+					if err != nil {
+						// TODO: log this err
+						rx.rendr.JSON(w, http.StatusNotFound, &jsonErr{errNotFound.Error()})
+						return
+					}
+					rx.rendr.JSON(w, http.StatusOK, p)
+					return
+				}
 				data.Add("error", errNotFound)
 				rx.rendr.HTML(w, http.StatusNotFound, "404", data)
 				return
+
 			}
 			if ss, ok := rx.isInSession(r); ok {
 				_, cp, err := rx.getCurrentUserAndProfile(ss)
 				if err != nil {
 					// log this?
 				}
+				data.Add("user", cp)
 				if cp.ID == p.ID {
 					data.Add("myProfile", true)
 				}
