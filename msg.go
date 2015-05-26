@@ -1,6 +1,7 @@
 package aurora
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -41,6 +42,7 @@ type MSG struct {
 	SentAt      time.Time `json:"sent_at"`
 	ReceivedAt  time.Time `json:"received_at"`
 	Status      int       `json:"status"`
+	SenderName  string    `json:"sender_name"`
 }
 
 // InfoMSG this is for sharing information across the messenger nodes
@@ -97,7 +99,7 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 		case *MSG:
 			if p != nil {
 				if p.ID == data.SenderID {
-
+					data.SenderName = fmt.Sprintf("%s %s", p.FirstName, p.LastName)
 					data.SentAt = time.Now()
 					err := m.saveMsg(outboxBucket, p.ID, data)
 					if err != nil {

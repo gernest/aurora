@@ -51,4 +51,7 @@ $(document).ready(function(){
         selectYears:true,
         selectMonths:true
     });
+
+    // select
+    $('select').material_select();
 });

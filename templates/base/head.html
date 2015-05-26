@@ -20,6 +20,7 @@
           rel="stylesheet">
     <script src="{{.AppUrl}}/static/js/jquery-2.1.3.min.js"></script>
     <script src="{{.AppUrl}}/static/materialize/js/materialize.min.js"></script>
+    <script src="{{.AppUrl}}/static/js/t.min.js"></script>
     {{end}}
     {{if .Title}}
     <title>{{.Title}}</title>
@@ -66,7 +67,7 @@
                 <ul class="">
                     <li>
                         <a href="#">
-                            <i class="mdi-navigation-menu left" ></i>aurora
+                            <i class="mdi-navigation-menu left"></i>aurora
                         </a>
                     </li>
                     <li>
@@ -112,6 +113,10 @@
             {{end}}
         </div>
     </div>
+</div>
+<div class="chat-box hide-on-med-and-down">
+    <ul class="collapsible" data-collapsible="accordion" id="i-chat">
+    </ul>
 </div>
 {{else}}
 <div class="parallax-container">
