@@ -14,11 +14,12 @@ $(document).ready(function(){
     var alertInbox       = "messageInbox";
     var msgAlert=$('#alert');
     var chatBox=$('#i-chat');
+    var idPrefix='aurora';
     var msgBox=''+
-        '<li>'+
-          '<div class="collapsible-header"><i class="mdi-notification-sms blue-text"></i>{{=sender_name}}</div>'+
+        '<li id="'+idPrefix+'{{=sender_id}}'+'">'+
+          '<div class="collapsible-header"><i class="mdi-notification-sms blue-text notice">1</i>{{=sender_name}}</div>'+
           '<div class="collapsible-body">'+
-            '<div class="row">'+
+            '<div class="row msgs">'+
               '<div class="msg-a">'+
                 '<p>{{=text}}</p>'+
               '</div>'+
@@ -42,26 +43,46 @@ $(document).ready(function(){
            '</div>'+
           '</div>'+
          '</li>';
+    var singleMsg=''+
+            '<div class="msg-a">'+
+                '<p>{{=text}}</p>'+
+            '</div>';
 
     var msgTmpl= new t(msgBox);
+    var singleMsgTmpl=new t(singleMsg);
     var addInbox=function(obj){
-        chatBox.append(msgTmpl.render(obj))
-            .bind('click',function(e){
-                $(this).collapsible();
-                $(this).find('button.i-msg-send')
-                    .bind('click',function(e){
-                        e.preventDefault();
-                        var mfm=$(this).parents('form#i-msg');
-                        var mtxt=mfm.find('textarea#i-msg-text');
-                        var msg={
-                            "recepient_id":$(this).attr('msg-s'),
-                            "sender_id":$(this).attr('msg-r'),
-                            "text":mtxt.val()
-                        };
-                        console.log(msg);
-                        conn.emit(sendEvt,msg);
-                    });
-            });
+        sid='#'+idPrefix+obj.sender_id;
+        var base=chatBox.find(sid);
+        if(base.length>0){
+            base.find('.msgs').append(singleMsgTmpl.render(obj));
+            n=base.find('i.notice');
+            n.text(Number(n.text())+1);
+        }else{
+            chatBox.append(msgTmpl.render(obj))
+                .one('click',function(e){
+                    $(this).collapsible();
+                    b =$(this);
+                    $(this).find('i.notice').text('');
+                    $(this).find('button.i-msg-send')
+                        .on('click',function(e){
+                            e.preventDefault();
+                            var mfm=$(this).parents('form#i-msg');
+                            var mtxt=mfm.find('textarea#i-msg-text');
+                            var msg={
+                                "recepient_id":$(this).attr('msg-s'),
+                                "sender_id":$(this).attr('msg-r'),
+                                "text":mtxt.val()
+                            };
+                            conn.emit(sendEvt,msg);
+                            var msgB=''+
+                                '<div class="msg-b">'+
+                                    '<p>'+mtxt.val()+'</p>'+
+                                '</div>';
+                            b.find('.msgs').append(msgB);
+                        });
+                });
+        }
+
     };
 
     send.click(function(e){

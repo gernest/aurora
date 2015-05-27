@@ -17,17 +17,21 @@ const (
 	sendEvt       = "send"
 	receiveEvt    = "receive"
 	sendFailedEvt = "sendFailed"
-	ignore        = "ignore"
+	ignoreEvt     = "ignore"
+	infoEvt       = "info"
+	readEvt       = "read"
 
 	// message buckets
 	outboxBucket = "outbox"
 	inboxBucket  = "inbox"
 	draftBucket  = "drafts"
+	readBucket   = "read"
 
 	// message allerts
 	alertSendSuccess = "sendSuccess"
 	alertSendFailed  = "sendFailled"
 	alertInbox       = "messageInbox"
+	alertRead        = "messageRead"
 
 	// cache
 	onlineCache = "online"
@@ -130,7 +134,7 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 					data.ReceivedAt = time.Now()
 					err := m.saveMsg(inboxBucket, p.ID, data)
 					if err != nil {
-						msg.SetEvent(ignore)
+						msg.SetEvent(ignoreEvt)
 						if m.isOnline(data.SenderID) {
 							m.rm.Emit(data.SenderID, sendFailedEvt, data)
 							return msg
@@ -158,6 +162,20 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 			}
 
 		}
+	case readEvt:
+		// After the user has read the message, we remove it from inbox and dump it in the
+		// read bucket. Buckets are cheap, why not?
+		switch data := msg.GetData().(type) {
+		case *MSG:
+			if p != nil && data.RecipientID == p.ID {
+				err := m.moveTo(readBucket, inboxBucket, p.ID, data.ID)
+				if err != nil {
+					// TODO: log this?
+				}
+				return setMSG(alertRead, nil, msg)
+			}
+
+		}
 
 	}
 	return msg
@@ -174,7 +192,7 @@ func (m *Messenger) saveMsg(bucket string, profileID string, msg *MSG) error {
 }
 
 // deletes a message
-func (m *Messenger) deletMsg(bucket, profileID string, msg *MSG) error {
+func (m *Messenger) deleteMsg(bucket, profileID string, msg *MSG) error {
 	pdb := getProfileDatabase(m.rx.cfg.DBDir, profileID, m.rx.cfg.DBExtension)
 	mdb := setDB(m.rx.db, pdb)
 	mdb.Delete(bucket, msg.ID, m.rx.cfg.MessagesBucket)
@@ -208,7 +226,7 @@ func (m *Messenger) currentUser(conn *golem.Connection) *Profile {
 	return p
 }
 
-// sets the event and data attributes of a givenMSG.
+// sets the event and data attributes of a given MSG.
 func setMSG(evt string, data interface{}, msg *golem.Message) *golem.Message {
 	if evt != "" {
 		msg.SetEvent(evt)
@@ -218,19 +236,32 @@ func setMSG(evt string, data interface{}, msg *golem.Message) *golem.Message {
 	}
 	return msg
 }
+
+// sends an info message
 func (m *Messenger) info(conn *golem.Connection, msg *InfoMSG) {
-	m.rm.Emit(mainRoom, "info", msg)
+	m.rm.Emit(mainRoom, infoEvt, msg)
 }
 
+// sends a message
 func (m *Messenger) send(conn *golem.Connection, msg *MSG) {
 	m.rm.Emit(msg.SenderID, sendEvt, msg)
 }
 
+// reading a message.
+func (m *Messenger) read(conn *golem.Connection, msg *MSG) {
+	m.rm.Emit(msg.RecipientID, readEvt, msg)
+}
+
+// when the connection is closed, it makes sure the cache is updated and all the channels
+// the given connection was subscribed to are unsubscribed.
 func (m *Messenger) onClose(conn *golem.Connection) {
 	m.online.Delete(conn.UserID)
 	m.rm.Leave(conn.UserID, conn)
+	m.rm.Leave(mainRoom, conn)
 }
 
+// checks if the user with a given key is still online.
+// it uses the siple cache2go to store online users in memory.
 func (m *Messenger) isOnline(key string) bool {
 	return m.online.Exists(key)
 }

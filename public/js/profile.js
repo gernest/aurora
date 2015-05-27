@@ -44,8 +44,6 @@ $(document).ready(function(){
     gz.on("error",function(file,msg){
         console.log(msg);
     });
-
-
     // birth date field
     $('#birth-date').pickadate({
         selectYears:true,

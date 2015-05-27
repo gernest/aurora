@@ -107,7 +107,7 @@ func TestMessenger(t *testing.T) {
 	}
 	d, err := marshalAndPach("send", tmsg)
 	if err != nil {
-		t.Errorf("marshaling and packing %v")
+		t.Errorf("marshaling and packing %v", err)
 	}
 
 	err = ws2.SetWriteDeadline(time.Now().Add(time.Second))
