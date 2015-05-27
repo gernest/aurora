@@ -161,25 +161,8 @@ func TestSaveUploadFile(t *testing.T) {
 		t.Errorf("checking file type: expected %s  got %s", f.Ext, pic.Type)
 	}
 
-	// Nude
-	req2, err := requestWithFile("boob.jpg")
-	if err != nil {
-		t.Error(err)
-	}
-
-	f, err = GetFileUpload(req2, "profile")
-	if err != nil {
-		t.Error(err)
-	}
-	checkExtension(f, "jpg", t)
-	pic, err = SaveUploadFile(pdb, f, p)
-	if err.Error() != errIsNude.Error() {
-		t.Errorf("checking nudity: xpected %s got %s", errIsNude.Error(), err.Error())
-	}
-	if pic != nil {
-		t.Error("expected nil")
-	}
 }
+
 func checkExtension(f *FileUpload, ext string, t *testing.T) {
 	rext, err := getFileExt(*f.Body)
 	if err != nil {

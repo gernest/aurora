@@ -342,9 +342,6 @@ func (rx *Remix) Uploads(w http.ResponseWriter, r *http.Request) {
 				rx.rendr.JSON(w, http.StatusInternalServerError, jr)
 				return
 			}
-			if serr != nil {
-				errs = append(errs, serr)
-			}
 			jr := &jsonUploads{Error: errs.Error(), Photos: rst}
 			rx.rendr.JSON(w, http.StatusOK, jr)
 			return
@@ -572,6 +569,7 @@ func (rx *Remix) isInSession(r *http.Request) (*sessions.Session, bool) {
 	}
 	return ss, false
 }
+
 func (rx *Remix) setSessionData(r *http.Request) render.TemplateData {
 	var (
 		data  = render.NewTemplateData()

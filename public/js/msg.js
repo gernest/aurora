@@ -12,7 +12,6 @@ $(document).ready(function(){
     var alertSendSuccess = "sendSuccess";
     var alertSendFailed  = "sendFailled";
     var alertInbox       = "messageInbox";
-    var msgAlert=$('#alert');
     var chatBox=$('#i-chat');
     var idPrefix='aurora';
     var msgBox=''+
@@ -107,7 +106,6 @@ $(document).ready(function(){
     });
 
     conn.on(alertInbox,function(data){
-        msgAlert.text(Number(msgAlert.text()) +1);
         Materialize.toast("kuna ujumbe wako",999);
         addInbox(data);
     });

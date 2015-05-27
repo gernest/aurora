@@ -11,12 +11,10 @@ $(document).ready(function(){
         previewTemplate: tmpl.html(),
         clickable: "#profile-pic",
         addRemoveLinks:true,
-        maxFilesize:2,
-        mazThumnailFileSize:2,
         thumbnailWidth:120,
         thumbnailHeigh:120,
         maxFiles:1,
-        acceptedFiles:"image/jpg,image/png,image/jpeg",
+        acceptedFiles:"image/*",
         previewsContainer: "#pic-preview"
     });
     dz.on('complete',function(file){
