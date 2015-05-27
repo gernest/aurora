@@ -97,12 +97,15 @@ $(document).ready(function(){
         pg.toggleClass('hide');
         txt.val("");
     });
+
     conn.on(alertSendSuccess,function(data){
         Materialize.toast("ujumbe umefanikiwa kutumwa",900);
     });
+
     conn.on(alertSendFailed,function(data){
         console.log(data);
     });
+
     conn.on(alertInbox,function(data){
         msgAlert.text(Number(msgAlert.text()) +1);
         Materialize.toast("kuna ujumbe wako",999);

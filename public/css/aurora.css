@@ -19,10 +19,10 @@
     bottom:0px;
     width:250px;
 }
-.chat-body{
+.msgs{
     background:white;
-    height:400px;
-    padding:5px 0px;
+    max-height:200px;
+    overflow: scroll;
 }
 
 .chat-head,.msg_head{
