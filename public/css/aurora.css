@@ -95,41 +95,13 @@
 }
 
 .msg-a{
-    background:#FDE4CE;
     min-height:10px;
     margin-bottom:5px;
-    margin-right:10px;
-    margin-left: 10px;
     border-radius:5px;
 }
-.msg-a:before{
-    content:"";
-    position:absolute;
-    width:0px;
-    height:0px;
-    border: 10px solid;
-    border-color: transparent #FDE4CE transparent transparent;
-    left:-20px;
-    top:7px;
-}
-
 
 .msg-b{
-    background:#EEF2E7;
-    padding:10px;
-    min-height:15px;
+    min-height:10px;
     margin-bottom:5px;
-    position:relative;
-    margin-left:10px;
     border-radius:5px;
-}
-.msg-b:after{
-    content:"";
-    position:absolute;
-    width:0px;
-    height:0px;
-    border: 10px solid;
-    border-color: transparent transparent transparent #EEF2E7;
-    right:-20px;
-    top:7px;
 }

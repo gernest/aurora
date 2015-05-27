@@ -19,7 +19,7 @@ $(document).ready(function(){
           '<div class="collapsible-header"><i class="mdi-notification-sms blue-text notice">1</i>{{=sender_name}}</div>'+
           '<div class="collapsible-body">'+
             '<div class="row msgs">'+
-              '<div class="msg-a">'+
+              '<div class="msg-a purple accent-1">'+
                 '<p>{{=text}}</p>'+
               '</div>'+
             '</div>'+
@@ -43,7 +43,7 @@ $(document).ready(function(){
           '</div>'+
          '</li>';
     var singleMsg=''+
-            '<div class="msg-a">'+
+            '<div class="msg-a purple accent-1">'+
                 '<p>{{=text}}</p>'+
             '</div>';
 
@@ -53,7 +53,9 @@ $(document).ready(function(){
         sid='#'+idPrefix+obj.sender_id;
         var base=chatBox.find(sid);
         if(base.length>0){
-            base.find('.msgs').append(singleMsgTmpl.render(obj));
+            bn=base.find('.msgs');
+            bn.append(singleMsgTmpl.render(obj));
+            bn.scrollTop(bn[0].scrollHeight);
             n=base.find('i.notice');
             n.text(Number(n.text())+1);
         }else{
@@ -74,10 +76,13 @@ $(document).ready(function(){
                             };
                             conn.emit(sendEvt,msg);
                             var msgB=''+
-                                '<div class="msg-b">'+
+                                '<div class="msg-b yellow accent-1">'+
                                     '<p>'+mtxt.val()+'</p>'+
                                 '</div>';
-                            b.find('.msgs').append(msgB);
+                            bn=b.find('.msgs');
+                            bn.append(msgB);
+                            bn.scrollTop(bn[0].scrollHeight);
+                            mtxt.val('');
                         });
                 });
         }
