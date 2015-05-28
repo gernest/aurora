@@ -72,6 +72,7 @@ func TestUpdateProfile(t *testing.T) {
 	}
 
 }
+
 func TestClean_profile(t *testing.T) {
 	testDb.DeleteDatabase()
 }

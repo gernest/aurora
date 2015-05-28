@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
 	"testing"
 	"time"
 
+	gs "github.com/gorilla/websocket"
 	"golang.org/x/net/websocket"
 )
 
@@ -88,16 +90,6 @@ func TestMessenger(t *testing.T) {
 	for _, cookie := range client.Jar.Cookies(origin) {
 		h.Set("Cookie", cookie.String())
 	}
-	cfg2, err := websocket.NewConfig(wsURL, ts.URL)
-	if err != nil {
-		t.Error(err)
-	}
-	cfg2.Header = h
-
-	ws2, err := websocket.DialConfig(cfg2)
-	if err != nil {
-		t.Error(err)
-	}
 
 	// try sending a bad request
 	tmsg := &MSG{
@@ -110,35 +102,40 @@ func TestMessenger(t *testing.T) {
 		t.Errorf("marshaling and packing %v", err)
 	}
 
-	err = ws2.SetWriteDeadline(time.Now().Add(time.Second))
+	nConn, err := net.Dial("tcp", origin.Host)
 	if err != nil {
-		t.Errorf("set write deadline %v", err)
+		t.Errorf("establishing a connection %v", err)
 	}
-	_, err = ws2.Write(d)
+
+	u, err := url.Parse(wsURL)
+	if err != nil {
+		t.Errorf("parsing wesocket url %v", err)
+	}
+	ws3, _, err := gs.NewClient(nConn, u, h, 1024, 1024)
+	if err != nil {
+		t.Errorf("extablishing websocket connection %v", err)
+	}
+	defer ws3.Close()
+	setDeadline(t, ws3)
+	err = ws3.WriteMessage(gs.TextMessage, d)
 	if err != nil {
 		t.Errorf("writing message %v", err)
 	}
-	err = ws2.SetReadDeadline(time.Now().Add(time.Second))
+	_, rs, err := ws3.ReadMessage()
 	if err != nil {
-		t.Errorf("set write deadline %v", err)
+		t.Errorf("reading message %v", err)
 	}
-	var rst = make([]byte, 512)
-	_, err = ws2.Read(rst)
+	evt, dmsg, err := unpackMSG(rs)
 	if err != nil {
-		t.Errorf("reding message %v", err)
-	}
-	evt, dmsg, err := unpackMSG(rst)
-	if err != nil {
-		t.Errorf("unpacking read message %v \n %s", err, string(rst))
+		t.Errorf("unpacking read message %v \n %s", err, string(rs))
 
 	}
 	if evt != alertSendSuccess {
 		t.Errorf("Expected %s got %s", alertSendSuccess, evt)
 	}
 	if !contains(string(dmsg), tmsg.Text) {
-		t.Errorf("Expected %s to contain %s", string(rst), tmsg.Text)
+		t.Errorf("Expected %s to contain %s", string(rs), tmsg.Text)
 	}
-	ws2.Close()
 }
 
 func marshalAndPach(name string, dPtr interface{}) ([]byte, error) {
@@ -158,4 +155,15 @@ func unpackMSG(data []byte) (string, []byte, error) {
 		return "", nil, errors.New("Unable to extract event name from data.")
 	}
 	return result[0], []byte(result[1]), nil
+}
+
+func setDeadline(t *testing.T, ws *gs.Conn) {
+	err := ws.SetWriteDeadline(time.Now().Add(time.Second))
+	if err != nil {
+		t.Errorf("set write deadline %v", err)
+	}
+	err = ws.SetReadDeadline(time.Now().Add(time.Second))
+	if err != nil {
+		t.Errorf("set read deadline %v", err)
+	}
 }

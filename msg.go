@@ -163,8 +163,6 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 
 		}
 	case readEvt:
-		// After the user has read the message, we remove it from inbox and dump it in the
-		// read bucket. Buckets are cheap, why not?
 		switch data := msg.GetData().(type) {
 		case *MSG:
 			if p != nil && data.RecipientID == p.ID {
@@ -189,14 +187,6 @@ func (m *Messenger) saveMsg(bucket string, profileID string, msg *MSG) error {
 	pdb := getProfileDatabase(m.rx.cfg.DBDir, profileID, m.rx.cfg.DBExtension)
 	mdb := setDB(m.rx.db, pdb)
 	return marshalAndCreate(mdb, msg, bucket, msg.ID, m.rx.cfg.MessagesBucket)
-}
-
-// deletes a message
-func (m *Messenger) deleteMsg(bucket, profileID string, msg *MSG) error {
-	pdb := getProfileDatabase(m.rx.cfg.DBDir, profileID, m.rx.cfg.DBExtension)
-	mdb := setDB(m.rx.db, pdb)
-	mdb.Delete(bucket, msg.ID, m.rx.cfg.MessagesBucket)
-	return mdb.Error
 }
 
 // moves message data from one bucket to another.
@@ -272,6 +262,7 @@ func (m *Messenger) Handler() func(http.ResponseWriter, *http.Request) {
 	m.route.OnConnect(m.onConnect)
 	m.route.OnClose(m.onClose)
 	m.route.On("info", m.info)
+	m.route.On("read", m.read)
 	m.route.On("send", m.send)
 	return m.route.Handler()
 }

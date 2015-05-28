@@ -36,11 +36,6 @@ func (u *User) Password() string {
 	return u.Pass
 }
 
-// NewUser creates a new user and assings him a new uuid
-func NewUser() *User {
-	return &User{UUID: getUUID()}
-}
-
 // Profile contains additional information about the user
 type Profile struct {
 	ID        string    `json:"id" gforms:"-"`

@@ -224,7 +224,7 @@ func (rx *Remix) Login(w http.ResponseWriter, r *http.Request) {
 			rx.rendr.HTML(w, http.StatusOK, loginPath, data)
 			return
 		}
-		if err = verifyPass(user.Pass, lform.Password); err != nil {
+		if err = verifyPass(user.Password(), lform.Password); err != nil {
 			data.Add("error", "email au namba ya siri sio sahihi, tafadhali jaribu tena")
 			rx.rendr.HTML(w, http.StatusOK, loginPath, data)
 			return

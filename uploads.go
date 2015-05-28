@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"html/template"
 	"image/jpeg"
 	"image/png"
 	"mime/multipart"
@@ -30,10 +29,6 @@ type Photo struct {
 	UploadedBy string    `json:"uploaded_by"`
 	UploadedAt time.Time `json:"uploaded_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
-}
-
-func (p *Photo) GetQuery() template.HTML {
-	return template.HTML(fmt.Sprintf("iid=%s&pid=%s", p.ID, p.UploadedBy))
 }
 
 // GetFileUpload retrieves uploaded file from a request.

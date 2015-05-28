@@ -408,7 +408,7 @@ func TestRemix_Profile(t *testing.T) {
 		profilePath = "/profile"
 		loginPath   = "/auth/login"
 		pass        = "mamamia"
-		birthDate   = "14 Apr 97 13:33 EAT"
+		birthDate   = "2 January, 1989"
 		err         error
 	)
 
@@ -632,18 +632,22 @@ func TestRemix_Profile(t *testing.T) {
 		"city":       {"mwanza"},
 		"country":    {"Tanzania"},
 		"age":        {"12"},
-		"birth_date": {birthDate},
+		"birth_date": {birthDateFormat},
 	}
 	res11, err := client.PostForm(loggedUsrURL, profileForm2)
 	if err != nil {
 		t.Error(err)
 	}
-	err = checkResponse(res11, http.StatusOK, "profile-home")
+	err = checkResponse(res11, http.StatusOK, "umri unatakiwa uwe zaidi ya miaka 18")
 	if err != nil {
 		t.Error(err)
 	}
 	// case posting a valid form, the user is logged in and the request is standard http
 	profileForm3 := url.Values{
+		"first_name": {"geofrey"},
+		"last_name":  {"ernest"},
+		"gender":     {"1"},
+		"street":     {"kilimahewa"},
 		"city":       {"mwanza"},
 		"country":    {"Tanzania"},
 		"age":        {"19"},
@@ -653,9 +657,9 @@ func TestRemix_Profile(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = checkResponse(res12, http.StatusOK, "profile-home")
+	err = checkResponse(res12, http.StatusOK, birthDate)
 	if err != nil {
-		t.Error(err)
+		t.Errorf("checking response %v", err)
 	}
 }
 

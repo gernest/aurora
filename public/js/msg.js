@@ -12,6 +12,7 @@ $(document).ready(function(){
     var alertSendSuccess = "sendSuccess";
     var alertSendFailed  = "sendFailled";
     var alertInbox       = "messageInbox";
+    var alertRead        = "messageRead";
     var chatBox=$('#i-chat');
     var idPrefix='aurora';
     var msgBox=''+
