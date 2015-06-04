@@ -181,6 +181,7 @@ func (m *Messenger) callMeBack(conn *golem.Connection, msg *golem.Message) *gole
 
 // persist a message
 func (m *Messenger) saveMsg(bucket string, profileID string, msg *MSG) error {
+
 	if msg.ID == "" {
 		msg.ID = getUUID()
 	}

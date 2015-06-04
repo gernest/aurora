@@ -687,6 +687,7 @@ func testServer(t *testing.T) (*httptest.Server, *http.Client, *Remix) {
 		TemplatesExtensions: []string{".tmpl", ".html", ".tpl"},
 		SessMaxAge:          30,
 		SessionPath:         "/",
+		MessagesBucket:"messages",
 	}
 	rx := NewRemix(cfg)
 	jar, err := cookiejar.New(nil)
