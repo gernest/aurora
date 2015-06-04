@@ -55,8 +55,7 @@ type Profile struct {
 }
 
 func (p *Profile) MyBirthDay() string {
-	t := time.Time{}
-	if p.BirthDate.String() == t.String() {
+	if p.BirthDate.IsZero() {
 		return time.Now().Format(birthDateFormat)
 	}
 	return p.BirthDate.Format(birthDateFormat)
