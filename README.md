@@ -19,9 +19,7 @@
 
 * cd to the builds directory and run the binary eg `cd ./builds/0.0.1&&./aurora`
 
-    
-#### author
-geofrey ernest
 
-### licence
-MIT
+## License
+
+This project is under the MIT License. See the [LICENSE](https://github.com/gernest/nutz/blob/master/LICENCE) file for the full license text.
