@@ -20,7 +20,12 @@ func marshalAndCreate(db nutz.Storage, obj interface{}, buck, key string, nest .
 	if err != nil {
 		return err
 	}
-	c := db.Create(buck, key, data, nest...)
+	if len(nest) > 0 {
+		c := db.Create(buck, key, data, nest...)
+		return c.Error
+
+	}
+	c := db.Create(buck, key, data)
 	return c.Error
 }
 
