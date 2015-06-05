@@ -54,7 +54,7 @@ func (a *AuroraCLI) Setup() {
 func (a *AuroraCLI) RunTests() {
 	a.log("===TESTING")
 	if a.verbose {
-		out, err := exec.Command("godep", "go", "test", "-v").Output()
+		out, err := exec.Command("go", "test", "-v").Output()
 		a.logErr(err)
 		if len(out) > 0 {
 			a.log(fmt.Sprintf("%s", out))

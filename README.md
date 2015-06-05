@@ -7,15 +7,21 @@
 
 
 ### building
-* check the file `config/build/build.json` make changes if you have changed the
-  project structure.
+
 * make sure [golang](https://golang.org/) is installed, I'm currently using v1.3.3
-* I assume you are running linux distro.
-* Make sure [godep](https://github.com/tools/godep) is installed
+
+* go get the project.
+
+		go get github.com/gernest/aurora
+
+* cd to the project path
+
+		cd $GOPATH/github.com/gernest/aurora
+
 
 * Run   `go run bin/build.go` to build.
 
-* check built project in `builds` directory.
+* check built project in `builds` directory inside the project path.
 
 * cd to the builds directory and run the binary eg `cd ./builds/0.0.1&&./aurora`
 
