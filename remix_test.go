@@ -337,8 +337,12 @@ func TestRemixt_ServeImages(t *testing.T) {
 	if len(p.Photos) != 3 {
 		t.Errorf("Expected 3 got %d", len(p.Photos))
 	}
-	imgURL := fmt.Sprintf("%s%s?%s", ts.URL, imagesPath, p.Picture.Query)
 
+	query := url.Values{
+		"iid": {p.Picture.ID},
+		"pid": {p.ID},
+	}
+	imgURL := fmt.Sprintf("%s%s?%s", ts.URL, imagesPath, query.Encode())
 	res, err = client.Get(imgURL)
 	defer res.Body.Close()
 	if err != nil {
@@ -687,7 +691,7 @@ func testServer(t *testing.T) (*httptest.Server, *http.Client, *Remix) {
 		TemplatesExtensions: []string{".tmpl", ".html", ".tpl"},
 		SessMaxAge:          30,
 		SessionPath:         "/",
-		MessagesBucket:"messages",
+		MessagesBucket:      "messages",
 	}
 	rx := NewRemix(cfg)
 	jar, err := cookiejar.New(nil)

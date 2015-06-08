@@ -8,7 +8,6 @@ import (
 	"image/png"
 	"mime/multipart"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/gernest/nutz"
@@ -20,18 +19,28 @@ type FileUpload struct {
 	Ext  string
 }
 
-// Photo is therepresentation of an uploaded image file
+// Photo is the metadata of an uploaded image file
 type Photo struct {
-	ID         string    `json:"id"`
-	Type       string    `json:"type"`
-	Size       int       `json:"size"`
-	Query      string    `json:"query"`
-	UploadedBy string    `json:"uploaded_by"`
+	ID string `json:"id"`
+
+	// Type is the photo's file extension e.g jpeg or png
+	Type string `json:"type"`
+
+	//Size is the size of the photo.
+	Size int `json:"size"`
+
+	//UploadedBy is the ID of the user who uploaded the photo
+	UploadedBy string `json:"uploaded_by"`
+
 	UploadedAt time.Time `json:"uploaded_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+
+	// UpdatedAt is the time the photo was updated. I keep this filed so as
+	// to provide, last modified time when serving the photo.
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// GetFileUpload retrieves uploaded file from a request.
+// GetFileUpload retrieves uploaded file from a request.This function, returns only
+// the first file that matches, thus retrieving a single file only.
 // the fieldName parameter is the name of the field which holds the file data.
 func GetFileUpload(r *http.Request, fieldName string) (*FileUpload, error) {
 	file, _, err := r.FormFile(fieldName)
@@ -41,6 +50,7 @@ func GetFileUpload(r *http.Request, fieldName string) (*FileUpload, error) {
 	return getUploadFile(file)
 }
 
+// a slice to hold a couple of errors
 type listErr []error
 
 func (l listErr) Error() string {
@@ -92,14 +102,33 @@ func GetMultipleFileUpload(r *http.Request, fieldName string) ([]*FileUpload, er
 	return nil, http.ErrMissingFile
 }
 
-// SaveUploadFile persists the given file
+// SaveUploadFile saves the uploaded photos to the profile database. In aurora, every user
+// has his/her own personal database.
+//
+// The db argument should be the user's database. The uploaded file is storesd in two versions
+// meta, and data. The meta, is the metadata about the uploaded file, in our case a Photo
+// object. The photo object is marshalled and stored in a metaBucket.
+//
+// The data part is the actual encoded file, its stored in the dataBucket.
 func SaveUploadFile(db nutz.Storage, file *FileUpload, p *Profile) (*Photo, error) {
 	var (
-		qPicID      = "iid"
-		qProfID     = "pid"
+		// The bucket in which all photos will reside.
 		photoBucket = "photos"
-		metaBucket  = "meta"
-		dataBucket  = "data"
+
+		// The bucket which stores metadata about the photos. This bucket iscreated
+		// inside the photoBucket.
+		metaBucket = "meta"
+
+		// The bucket in which actual data that is in []byte is stored. its also created
+		// inside the photoBucket
+		dataBucket = "data"
+
+		// NOTE: To keep the structure of recording data sane, I have used nested buckets.
+		// So, the structure of the photo storage buckets is roughly like this.
+		//
+		// photoBucket
+		//			 |---metaBucket
+		//			 |---daaBucket
 	)
 	pic := &Photo{
 		ID:         getUUID(),
@@ -113,11 +142,6 @@ func SaveUploadFile(db nutz.Storage, file *FileUpload, p *Profile) (*Photo, erro
 		return nil, err
 	}
 	pic.Size = len(data)
-	query := url.Values{
-		qPicID:  {pic.ID},
-		qProfID: {p.ID},
-	}
-	pic.Query = query.Encode()
 	err = marshalAndCreate(db, pic, photoBucket, pic.ID, metaBucket)
 	if err != nil {
 		return nil, err
@@ -129,6 +153,7 @@ func SaveUploadFile(db nutz.Storage, file *FileUpload, p *Profile) (*Photo, erro
 	return pic, nil
 }
 
+// extracts file extension.
 func getFileExt(file multipart.File) (string, error) {
 	buf := make([]byte, 512)
 	_, err := file.Read(buf)
@@ -147,6 +172,8 @@ func getFileExt(file multipart.File) (string, error) {
 	}
 }
 
+// Returns  *FileUpload from the given multipart data. There is nothing fancy here, only that
+// We need to get the file extension.
 func getUploadFile(file multipart.File) (*FileUpload, error) {
 	ext, err := getFileExt(file)
 	if err != nil {
@@ -155,6 +182,8 @@ func getUploadFile(file multipart.File) (*FileUpload, error) {
 	return &FileUpload{&file, ext}, nil
 }
 
+// encodes a given photo, and returns a []byte of the photo. It currently supports
+// png, and jpeg formats. The encoded data is the one which will be stored in the database.
 func encodePhoto(file *FileUpload) ([]byte, error) {
 	ext := file.Ext
 	switch ext {
