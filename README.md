@@ -1,5 +1,36 @@
 # aurora [![Build Status](https://drone.io/github.com/gernest/aurora/status.png)](https://drone.io/github.com/gernest/aurora/latest)[![Coverage Status](https://coveralls.io/repos/gernest/aurora/badge.svg?branch=master)](https://coveralls.io/r/gernest/aurora?branch=master)
 
+## Guide
+1. Getting started
+	- Overview
+	- features
+	- Installation
+2. Routes
+	- Overview
+	- Home
+	- Register
+	- Login
+	- ServeImages
+	- Uploads
+	- Logout
+	- Profile
+3. Chat
+	- Overview
+	- Server side
+	- Client side
+4. Forms
+5. COnfiguration
+6. Sessions
+7. File uploads.
+
+
+
+
+
+
+
+
+
 ### features
 * user authentication and profile management.
 * file uploads(images)
