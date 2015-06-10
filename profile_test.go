@@ -11,27 +11,23 @@ var (
 )
 
 func TestCreateProfile(t *testing.T) {
-	var (
-		pBucket = "profiles"
-		err     error
-	)
+	pBucket := "profiles"
 	for _, id := range pids {
 		p := &Profile{ID: id}
-		err = CreateProfile(testDb, p, pBucket)
+		err := CreateProfile(db, p, pBucket)
 		if err != nil {
 			t.Error(err)
 		}
 	}
-	err = CreateProfile(testDb, &Profile{ID: pids[0]}, pBucket)
+	err := CreateProfile(db, &Profile{ID: pids[0]}, pBucket)
 	if err == nil {
 		t.Error("Expected an error")
 	}
 }
 func TestGetProfile(t *testing.T) {
-	var pBucket = "profiles"
-
+	pBucket := "profiles"
 	for _, id := range pids {
-		p, err := GetProfile(testDb, pBucket, id)
+		p, err := GetProfile(db, pBucket, id)
 		if err != nil {
 			t.Error(err)
 		}
@@ -39,7 +35,7 @@ func TestGetProfile(t *testing.T) {
 			t.Errorf("Expected %s got %s", id, p.ID)
 		}
 	}
-	p, err := GetProfile(testDb, pBucket, "bogus")
+	p, err := GetProfile(db, pBucket, "bogus")
 	if err == nil {
 		t.Error("Expected an error")
 	}
@@ -53,26 +49,24 @@ func TestUpdateProfile(t *testing.T) {
 		country = "Tanzania"
 		pBucket = "profiles"
 	)
+
+	// Make sure the database used is removed.
 	for _, id := range pids {
-		p, err := GetProfile(testDb, pBucket, id)
+		p, err := GetProfile(db, pBucket, id)
 		if err != nil {
 			t.Error(err)
 		}
 		p.City = city
 		p.Country = country
-		err = UpdateProfile(testDb, p, pBucket)
+		err = UpdateProfile(db, p, pBucket)
 		if err != nil {
 			t.Error(err)
 		}
 	}
 	p := &Profile{ID: "bogus", Country: country, City: city}
-	err := UpdateProfile(testDb, p, pBucket)
+	err := UpdateProfile(db, p, pBucket)
 	if err == nil {
 		t.Error("Expected an error got nil instead")
 	}
 
-}
-
-func TestClean_profile(t *testing.T) {
-	testDb.DeleteDatabase()
 }

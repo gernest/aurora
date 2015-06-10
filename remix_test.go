@@ -9,7 +9,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -667,11 +666,6 @@ func TestRemix_Profile(t *testing.T) {
 	}
 }
 
-// This cleans up all the remix based test databases
-func TestClean_remix(t *testing.T) {
-	clenUp(t)
-}
-
 // Creates a test druve server for using the Remix handlers., it also returns a ready
 // to use client, that supports sessions.
 func testServer(t *testing.T) (*httptest.Server, *http.Client, *Remix) {
@@ -698,6 +692,12 @@ func testServer(t *testing.T) (*httptest.Server, *http.Client, *Remix) {
 	if err != nil {
 		t.Error(err)
 	}
+
+	// Create the database directory if it does not exist
+	err=os.MkdirAll(rx.cfg.DBDir,0700)
+	if err!=nil {
+		t.Error(err)
+	}
 	client := &http.Client{Jar: jar}
 	ts := httptest.NewServer(rx.Routes())
 	return ts, client, rx
@@ -708,29 +708,6 @@ func contains(str, substr string) bool {
 	return strings.Contains(str, substr)
 }
 
-// deletes test database files
-func clenUp(t *testing.T) {
-	ts, _, rx := testServer(t)
-	defer ts.Close()
-	ferr := filepath.Walk(rx.cfg.DBDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		if filepath.Ext(path) == rx.cfg.DBExtension {
-			err = os.Remove(path)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	if ferr != nil {
-		t.Error(ferr)
-	}
-}
 
 func httpGet(client *http.Client, url string) (*http.Response, error) {
 	h := make(http.Header)

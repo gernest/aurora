@@ -6,8 +6,7 @@ import (
 	"github.com/gernest/nutz"
 )
 
-var testDb = nutz.NewStorage("test.ddb", 0600, nil)
-var db = nutz.NewStorage("auth_test.ddb", 0600, nil)
+var db = nutz.NewStorage("_test.ddb", 0600, nil)
 
 func TestCreateAccount(t *testing.T) {
 	bucket := "test_create_account"
@@ -63,7 +62,6 @@ func TestGetUser(t *testing.T) {
 func TestGetAll(t *testing.T) {
 	var origin string
 	bucket := "get_all"
-	defer db.DeleteDatabase()
 	for _ = range []int{1, 2, 3, 4} {
 		usr := &User{
 			UUID: getUUID(),
@@ -84,7 +82,7 @@ func TestGetAll(t *testing.T) {
 			t.Errorf("expected %s to be in %s", v, origin)
 		}
 	}
-	zz, err := GetAllUsers(testDb, "lora")
+	zz, err := GetAllUsers(db, "lora")
 	if err == nil {
 		t.Error("expected an error")
 	}

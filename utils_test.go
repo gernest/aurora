@@ -1,6 +1,7 @@
 package aurora
 
 import (
+	"os"
 	"testing"
 )
 
@@ -11,6 +12,8 @@ func TestFlash(t *testing.T) {
 		notice  = "note"
 		err     = "error"
 	)
+
+	defer clenUp(t)
 	flash.Success(success)
 	flash.Notice(notice)
 	flash.Error(err)
@@ -23,5 +26,15 @@ func TestFlash(t *testing.T) {
 	}
 	if d["FlashError"].(string) != err {
 		t.Errorf("Expected %s got %s", err, d["FlashError"])
+	}
+}
+
+// deletes test database files
+func clenUp(t *testing.T) {
+	ts, _, rx := testServer(t)
+	defer ts.Close()
+	err := os.RemoveAll(rx.cfg.DBDir)
+	if err != nil {
+		t.Error(err)
 	}
 }
