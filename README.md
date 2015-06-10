@@ -26,7 +26,7 @@ programming language, and also to experiment with testing web services in Go.
 	- Server side
 	- Client side
 4. Forms
-5. COnfiguration
+5. Configuration
 6. Sessions
 7. File uploads.
 
