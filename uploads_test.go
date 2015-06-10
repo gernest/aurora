@@ -101,11 +101,11 @@ func TestSaveUploadFile(t *testing.T) {
 	defer pdb.DeleteDatabase()
 
 	//jpg
-	req, err = requestWithFile("me.jpg")
+	req, err := requestWithFile("me.jpg")
 	if err != nil {
 		t.Error(err)
 	}
-	f, err = GetFileUpload(req, "profile")
+	f, err := GetFileUpload(req, "profile")
 	if err != nil {
 		t.Error(err)
 	}
@@ -115,11 +115,11 @@ func TestSaveUploadFile(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	p, err = GetProfile(pdb, pBucket, id)
+	p, err := GetProfile(pdb, pBucket, id)
 	if err != nil {
 		t.Error(err)
 	}
-	pic, err = SaveUploadFile(pdb, f, p)
+	pic, err := SaveUploadFile(pdb, f, p)
 	if err != nil {
 		t.Error(err)
 	}
@@ -128,7 +128,7 @@ func TestSaveUploadFile(t *testing.T) {
 	}
 
 	// png
-	req1, err = requestWithFile("mint.png")
+	req1, err := requestWithFile("mint.png")
 	if err != nil {
 		t.Error(err)
 	}
