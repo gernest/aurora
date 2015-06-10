@@ -13,20 +13,15 @@ import (
 )
 
 func TestGetFileUpload(t *testing.T) {
-	var (
-		jpegFile  = "me.jpg"
-		fieldName = "profile"
-		pngFile   = "mint.png"
-		err       error
-		req, req1 *http.Request
-		f         *FileUpload
-	)
+	jpegFile := "me.jpg"
+	fieldName := "profile"
+	pngFile := "mint.png"
 
-	req, err = requestWithFile(jpegFile)
+	req, err := requestWithFile(jpegFile)
 	if err != nil {
 		t.Error(err)
 	}
-	f, err = GetFileUpload(req, fieldName)
+	f, err := GetFileUpload(req, fieldName)
 	if err != nil {
 		t.Error(err)
 	}
@@ -40,7 +35,7 @@ func TestGetFileUpload(t *testing.T) {
 		t.Errorf("Expected nil, got %v", f)
 	}
 
-	req1, err = requestWithFile(pngFile)
+	req1, err := requestWithFile(pngFile)
 	if err != nil {
 		t.Error(err)
 	}
@@ -52,14 +47,9 @@ func TestGetFileUpload(t *testing.T) {
 }
 
 func TestGetMultipleFileUpload(t *testing.T) {
-	var (
-		fileName  = "me.jpg"
-		err       error
-		req, req1 *http.Request
-		files     []*FileUpload
-	)
-	req = requestMuliFile(fileName, t)
-	files, err = GetMultipleFileUpload(req, "photos")
+	fileName := "me.jpg"
+	req := requestMuliFile(fileName, t)
+	files, err := GetMultipleFileUpload(req, "photos")
 	if err != nil {
 		list := err.(listErr)
 		if len(list) != 2 {
@@ -90,7 +80,7 @@ func TestGetMultipleFileUpload(t *testing.T) {
 		t.Error("Expected an error, got nil instead")
 	}
 
-	req1, err = requestMultiWithoutErr()
+	req1, err := requestMultiWithoutErr()
 	if err != nil {
 		t.Error(err)
 	}
@@ -103,25 +93,19 @@ func TestGetMultipleFileUpload(t *testing.T) {
 	}
 }
 func TestSaveUploadFile(t *testing.T) {
-	var (
-		pBucket   = "profiles"
-		id        = "db0668ac-7eba-40dd-56ee-0b1c0b9b415p"
-		uploadsDB = "fixture/uploads.bdb"
-		err       error
-		req, req1 *http.Request
-		f         *FileUpload
-		p         *Profile
-		pic       *Photo
-	)
+	pBucket := "profiles"
+	id := "db0668ac-7eba-40dd-56ee-0b1c0b9b415p"
+	uploadsDB := "fixture/uploads.bdb"
+
 	pdb := nutz.NewStorage(uploadsDB, 0600, nil)
 	defer pdb.DeleteDatabase()
 
 	//jpg
-	req, err = requestWithFile("me.jpg")
+	req, err := requestWithFile("me.jpg")
 	if err != nil {
 		t.Error(err)
 	}
-	f, err = GetFileUpload(req, "profile")
+	f, err := GetFileUpload(req, "profile")
 	if err != nil {
 		t.Error(err)
 	}
@@ -131,11 +115,11 @@ func TestSaveUploadFile(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	p, err = GetProfile(pdb, pBucket, id)
+	p, err := GetProfile(pdb, pBucket, id)
 	if err != nil {
 		t.Error(err)
 	}
-	pic, err = SaveUploadFile(pdb, f, p)
+	pic, err := SaveUploadFile(pdb, f, p)
 	if err != nil {
 		t.Error(err)
 	}
@@ -144,7 +128,7 @@ func TestSaveUploadFile(t *testing.T) {
 	}
 
 	// png
-	req1, err = requestWithFile("mint.png")
+	req1, err := requestWithFile("mint.png")
 	if err != nil {
 		t.Error(err)
 	}

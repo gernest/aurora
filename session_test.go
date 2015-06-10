@@ -57,16 +57,14 @@ func TestSess_Get(t *testing.T) {
 func TestSess_Delete(t *testing.T) {
 	store, req := sessSetup(t)
 	s := testSaveSess(store, req, t, "user", "gernest")
-	defer testDb.DeleteDatabase()
+	defer db.DeleteDatabase()
 	w := httptest.NewRecorder()
 	err := store.Delete(req, w, s)
 	if err != nil {
 		t.Error(err)
 	}
 }
-func TestClean_session(t *testing.T) {
-	testDb.DeleteDatabase()
-}
+
 
 func sessSetup(t *testing.T) (*Session, *http.Request) {
 	var (
@@ -77,7 +75,7 @@ func sessSetup(t *testing.T) (*Session, *http.Request) {
 		testURL = "http://www.example.com"
 	)
 	opts := &sessions.Options{MaxAge: maxAge, Path: sPath}
-	store := NewSessStore(testDb, sBucket, 10, opts, secret)
+	store := NewSessStore(db, sBucket, 10, opts, secret)
 	req, err := http.NewRequest("GET", testURL, nil)
 	if err != nil {
 		t.Error(err)

@@ -6,14 +6,10 @@ import (
 	"github.com/gernest/nutz"
 )
 
-var testDb = nutz.NewStorage("fixture/test.ddb", 0600, nil)
+var db = nutz.NewStorage("_test.ddb", 0600, nil)
 
 func TestCreateAccount(t *testing.T) {
-	var (
-		bucket = "test_create_account"
-		db     = nutz.NewStorage("fixture/test_auth_create.ddb", 0600, nil)
-	)
-	defer db.DeleteDatabase()
+	bucket := "test_create_account"
 	dataset := []struct {
 		uuid, email string
 	}{
@@ -33,13 +29,7 @@ func TestCreateAccount(t *testing.T) {
 }
 
 func TestGetUser(t *testing.T) {
-	var (
-		bucket = "test_get"
-		db     = nutz.NewStorage("fixture/test_auth_get.ddb", 0600, nil)
-		user   *User
-		err    error
-	)
-	defer db.DeleteDatabase()
+	bucket := "test_get"
 	dataset := []struct {
 		uuid, email string
 	}{
@@ -52,12 +42,13 @@ func TestGetUser(t *testing.T) {
 			EmailAddress: u.email,
 			UUID:         u.uuid,
 		}
-		if err = CreateAccount(db, usr, bucket); err != nil {
+		if err := CreateAccount(db, usr, bucket); err != nil {
 			t.Error(err)
 		}
 	}
 	for _, u := range dataset {
-		if user, err = GetUser(db, bucket, u.email); err != nil {
+		user, err := GetUser(db, bucket, u.email)
+		if err != nil {
 			t.Errorf("geeting user %v", err)
 		}
 		if user.UUID != u.uuid {
@@ -69,26 +60,20 @@ func TestGetUser(t *testing.T) {
 	}
 }
 func TestGetAll(t *testing.T) {
-	var (
-		bucket = "get_all"
-		db     = nutz.NewStorage("fixture/test_auth_get_all.ddb", 0600, nil)
-		origin string
-		curr   []string
-		err    error
-	)
-	defer db.DeleteDatabase()
+	var origin string
+	bucket := "get_all"
 	for _ = range []int{1, 2, 3, 4} {
 		usr := &User{
 			UUID: getUUID(),
 		}
 		usr.EmailAddress = usr.UUID
-		err = CreateAccount(db, usr, bucket)
+		err := CreateAccount(db, usr, bucket)
 		if err != nil {
 			t.Error(err)
 		}
 		origin = origin + "," + usr.UUID
 	}
-	curr, err = GetAllUsers(db, bucket)
+	curr, err := GetAllUsers(db, bucket)
 	if err != nil {
 		t.Error(err)
 	}
@@ -97,7 +82,7 @@ func TestGetAll(t *testing.T) {
 			t.Errorf("expected %s to be in %s", v, origin)
 		}
 	}
-	zz, err := GetAllUsers(testDb, "lora")
+	zz, err := GetAllUsers(db, "lora")
 	if err == nil {
 		t.Error("expected an error")
 	}
