@@ -8,27 +8,20 @@ This is not for production use, I started this project as a way to learn more ab
 programming language, and also to experiment with testing web services in Go.
 
 ## Guide
-1. Getting started
-	- Overview
-	- features
-	- Installation
-2. Routes
-	- Overview
-	- Home
-	- Register
-	- Login
-	- ServeImages
-	- Uploads
-	- Logout
-	- Profile
-3. Chat
-	- Overview
-	- Server side
-	- Client side
-4. Forms
-5. Configuration
-6. Sessions
-7. File uploads.
+1. [Getting started](https://github.com/gernest/aurora/blob/master/docs/getting-started.md)
+	- [x] Overview
+	- [x] Installation
+
+
+Roadmap
+-------
+
+## Features
+- [x] chat
+- [x] profile management
+- [x] photo upload
+- [x] ??? any ideas?
+
 
 ## Contributing
 This is a playground, all kinds of contibutions are welcome. Since it is for learning and
