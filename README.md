@@ -30,6 +30,12 @@ programming language, and also to experiment with testing web services in Go.
 6. Sessions
 7. File uploads.
 
+## Contributing
+This is a playground, all kinds of contibutions are welcome. Since it is for learning and
+experimenting, feel free to think of new ideas.
+
+The important thing is to test, whatever you add make sure it has tests. Also be clear on what
+exactly ypur PR does.
 
 ## License
 
