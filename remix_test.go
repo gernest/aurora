@@ -467,7 +467,7 @@ func TestRemix_Profile(t *testing.T) {
 		}
 
 		// case a valid profile query, and the request is standard http.
-		res, err := httpGet(client, fmt.Sprintf("%s/profile?%s", ts.URL, vars.Encode()))
+		res, err := client.Get(fmt.Sprintf("%s/profile?%s", ts.URL, vars.Encode()))
 		if err != nil {
 			t.Error(err)
 		}
@@ -478,7 +478,7 @@ func TestRemix_Profile(t *testing.T) {
 
 		// case wrong profile url query, to be precise, the id is wrong that is it is not
 		// a valid uuid and no any profile matches. The request is standard http.
-		res0, err := httpGet(client, fmt.Sprintf("%s/profile?%s", ts.URL, vars2.Encode()))
+		res0, err := client.Get(fmt.Sprintf("%s/profile?%s", ts.URL, vars2.Encode()))
 		if err != nil {
 			t.Error(err)
 		}
@@ -496,6 +496,7 @@ func TestRemix_Profile(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
+
 		// case wrong profile url query, to be precise, the id is wrong that is it is not
 		// a valid uuid and no any profile matches. The request is standard  ajax.
 		res2, err := httpGetAjax(client, fmt.Sprintf("%s/profile?%s", ts.URL, vars2.Encode()))
@@ -509,13 +510,12 @@ func TestRemix_Profile(t *testing.T) {
 	}
 
 	// A correct profile url query for viewing all profiles
-	vars := url.Values{
-		"view": {"true"},
-		"all":  {"true"},
-	}
+	vars := url.Values{"view": {"true"}, "all": {"true"}}
+
+	getAllURL := fmt.Sprintf("%s/profile?%s", ts.URL, vars.Encode())
 
 	// case viewing all profiles via standard http
-	res3, err := httpGet(client, fmt.Sprintf("%s/profile?%s", ts.URL, vars.Encode()))
+	res3, err := client.Get(getAllURL)
 	if err != nil {
 		t.Error(err)
 	}
@@ -525,7 +525,7 @@ func TestRemix_Profile(t *testing.T) {
 	}
 
 	// case viewing all profiles via ajax
-	res4, err := httpGetAjax(client, fmt.Sprintf("%s/profile?%s", ts.URL, vars.Encode()))
+	res4, err := httpGetAjax(client, getAllURL)
 	if err != nil {
 		t.Error(err)
 	}
@@ -543,7 +543,7 @@ func TestRemix_Profile(t *testing.T) {
 	rx.cfg.AccountsBucket = ""
 
 	// case an ajax request
-	res5, err := httpGetAjax(client, fmt.Sprintf("%s/profile?%s", ts.URL, vars.Encode()))
+	res5, err := httpGetAjax(client, getAllURL)
 	if err != nil {
 		t.Error(err)
 	}
@@ -553,7 +553,7 @@ func TestRemix_Profile(t *testing.T) {
 	}
 
 	// case a standard http request
-	res6, err := httpGet(client, fmt.Sprintf("%s/profile?%s", ts.URL, vars.Encode()))
+	res6, err := client.Get(getAllURL)
 	if err != nil {
 		t.Error(err)
 	}
@@ -565,14 +565,10 @@ func TestRemix_Profile(t *testing.T) {
 	// Restore the accounts bucket config value
 	rx.cfg.AccountsBucket = bAcc
 
-	profileForm := url.Values{
-		"city":    {"mwanza"},
-		"country": {"Tanzania"},
-	}
-	vars = url.Values{
-		"u":  {"true"},
-		"id": {pids[0]},
-	}
+	profileForm := url.Values{"city": {"mwanza"}, "country": {"Tanzania"}}
+
+	// update query for a singele user with id pids[0]
+	vars = url.Values{"u": {"true"}, "id": {pids[0]}}
 
 	// case posting a valid form but the user is not logged in, the request is a standard http one.
 	res7, err := client.PostForm(fmt.Sprintf("%s%s?%s", ts.URL, profilePath, vars.Encode()), profileForm)
@@ -593,11 +589,9 @@ func TestRemix_Profile(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
 	// login and create a session for user with pids[0]
-	varsLogin := url.Values{
-		"email":    {emails[0]},
-		"password": {pass},
-	}
+	varsLogin := url.Values{"email": {emails[0]}, "password": {pass}}
 	res9, err := client.PostForm(fmt.Sprintf("%s%s", ts.URL, loginPath), varsLogin)
 	if err != nil {
 		t.Error(err)
@@ -606,10 +600,8 @@ func TestRemix_Profile(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	vars = url.Values{
-		"u":  {"true"},
-		"id": {pids[1]},
-	}
+
+	vars = url.Values{"u": {"true"}, "id": {pids[1]}}
 
 	// case posting a valid form and the user is  logged in, the request is a standard http one.
 	// The loggedIn user ID is defferent from the id provided by the url.
@@ -694,8 +686,8 @@ func testServer(t *testing.T) (*httptest.Server, *http.Client, *Remix) {
 	}
 
 	// Create the database directory if it does not exist
-	err=os.MkdirAll(rx.cfg.DBDir,0700)
-	if err!=nil {
+	err = os.MkdirAll(rx.cfg.DBDir, 0700)
+	if err != nil {
 		t.Error(err)
 	}
 	client := &http.Client{Jar: jar}
@@ -707,7 +699,6 @@ func testServer(t *testing.T) (*httptest.Server, *http.Client, *Remix) {
 func contains(str, substr string) bool {
 	return strings.Contains(str, substr)
 }
-
 
 func httpGet(client *http.Client, url string) (*http.Response, error) {
 	h := make(http.Header)
