@@ -8,7 +8,7 @@ This is not for production use, I started this project as a way to learn more ab
 programming language, and also to experiment with testing web services in Go.
 
 ## Guide
-1. [Getting started](https://github.com/gernest/aurora/blob/master/docs/getting-started.md)
+1. [Getting started](docs/getting-started.md)
 	- [x] Overview
 	- [x] Installation
 
@@ -22,6 +22,13 @@ Roadmap
 - [x] photo upload
 - [x] ??? any ideas?
 
+
+Scrrenshots
+___________
+
+![screenshot1](screenshot1.png)
+
+![screenshot2](screenshot2.png)
 
 ## Contributing
 This is a playground, all kinds of contibutions are welcome. Since it is for learning and
