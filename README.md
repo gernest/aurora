@@ -1,4 +1,4 @@
-# aurora [![Build Status](https://drone.io/github.com/gernest/aurora/status.png)](https://drone.io/github.com/gernest/aurora/latest)[![Coverage Status](https://coveralls.io/repos/gernest/aurora/badge.svg?branch=master)](https://coveralls.io/r/gernest/aurora?branch=master)
+# aurora [![Build Status](https://drone.io/github.com/gernest/aurora/status.png)](https://drone.io/github.com/gernest/aurora/latest)[![Coverage Status](https://coveralls.io/repos/gernest/aurora/badge.svg?branch=master)](https://coveralls.io/r/gernest/aurora?branch=master) [![GoDoc](https://godoc.org/github.com/gernest/aurora?status.svg)](https://godoc.org/github.com/gernest/aurora)
 
 ### What is aurora?
 Aurora is a lightweight social network application written in [Go programming language](http://golang.org/),
