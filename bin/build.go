@@ -88,8 +88,8 @@ func (a *AuroraCLI) Assemble() {
 	a.logErr(a.copyDir(a.cfg.Templates, path.Join(a.buildDir, a.cfg.Templates)))
 
 	// copy application configurations
-	appCfg := path.Join(a.buildDir, path.Join(a.cfg.ConfigDir, "app"))
-	a.logErr(a.copyDir(path.Join(a.cfg.ConfigDir, "app"), appCfg))
+	appCfg := path.Join(a.buildDir, a.cfg.ConfigDir)
+	a.logErr(a.copyDir(a.cfg.ConfigDir, appCfg))
 	a.log("---DONE")
 
 }
@@ -237,7 +237,7 @@ func (a *AuroraCLI) clean() {
 }
 func main() {
 	v := flag.Bool("v", false, "logs build messages on stdout")
-	c := flag.String("c", "config/build/build.json", "specifies wich configuration file to use")
+	c := flag.String("c", "config/build.json", "specifies wich configuration file to use")
 	flag.Parse()
 	a := NewCLI()
 	if *v {

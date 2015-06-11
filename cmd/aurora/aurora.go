@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	d, err := ioutil.ReadFile("config/app/app.json")
+	d, err := ioutil.ReadFile("config/app.json")
 	if err != nil {
 		panic(err)
 	}
