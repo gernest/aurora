@@ -1,0 +1,58 @@
+{{/* builds aurora */}}
+
+{{/* configurations */}}
+    {{$name       := "aurora"}}
+    {{$version    := "0.0.1"}}
+    {{$public     := "public"}}
+    {{$templates  := "templates"}}
+    {{$destination:= "builds"}}
+    {{$config     := "config"}}
+    {{$database   := "db"}}
+    {{$cmd        :="cmd/aurora/aurora.go"}}
+    {{$buildPath  := printf "%s/%s" $destination $version}}
+{{/* end  configuration */}}
+
+{{printf "building %s it might take a while please wait .." $name}}
+{{/* setup */}}
+    {{/* get all dependencies */}}
+    {{run "go" "get" "-t"}}
+
+    {{/* remove any previous builds */}}
+    {{clean $destination}}
+    {{mkdir $buildPath 0700}}
+{{/* end setup */}}
+
+{{/* test */}}
+    {{run "go" "test"}}
+{{/* end test */}}
+
+{{/* create binary */}}
+    {{$bin:=printf "%s/%s" $buildPath $name}}
+
+    {{run "go" "build" "-o" $bin $cmd}}
+{{/* end binary*/}}
+
+{{/* assemble */}}
+    {{/* prepare database */}}
+    {{$dbDir:=printf "%s/%s" $buildPath $database}}
+    {{mkdir $dbDir 0700}}
+
+    {{/* copy configurations */}}
+    {{$cfg:=printf "%s/%s" $buildPath $config}}
+    {{file $config}}
+        {{copy . $cfg|ignore}}
+    {{end}}
+
+    {{/* copy public files */}}
+    {{$pub:=printf "%s/%s" $buildPath $public}}
+    {{file $public}}
+        {{copy . $pub}}
+    {{end}}
+
+    {{/* copy templates */}}
+    {{$tmpl:=printf "%s/%s" $buildPath $templates}}
+    {{file $templates}}
+        {{copy . $tmpl}}
+    {{end}}
+{{/* end assemble */}}
+{{printf "[SUCCESS] built %s version %s" $name $version}}

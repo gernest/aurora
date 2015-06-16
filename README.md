@@ -13,6 +13,23 @@ programming language, and also to experiment with testing web services in Go.
 	- [x] Installation
 
 
+### Alternative way to build
+I was digging in the go standard library, and thought I should experiment on the `text/template`. I extended it and made a toy yet working build tool(a.k.a template based build tool). The source code is found here [zanzibar](https://github.com/gernest/zanzibar).
+
+You can build aurora using zanzibar tool. Install it first.
+
+	go get github.com/gernest/zanzibar
+
+clone aurora
+
+	git clone https://github.com/gernest/aurora
+
+cd into aurora and run zanzibar
+
+	cd aurora&&zanzibar
+
+you should find your build in builds directory.
+
 Roadmap
 -------
 
